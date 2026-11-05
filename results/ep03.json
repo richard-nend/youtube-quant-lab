@@ -1,0 +1,591 @@
+{
+  "episode": "ep03",
+  "experiments": {
+    "smc_backtest": {
+      "values": {
+        "A_naive_lib": {
+          "trades": 1778,
+          "win_rate": 0.3076490438695163,
+          "avg_win": 0.007833589182990121,
+          "avg_loss": -0.003546604627393666,
+          "payoff_ratio": 2.208757390796865,
+          "profit_factor": 0.9814705871371935,
+          "expectancy": -4.549888257930578e-05,
+          "total_return": -0.008461761184973993,
+          "total_return_before_costs": 0.1264448668783027,
+          "total_cost_paid": 0.12755,
+          "max_drawdown": -0.027793379705948085,
+          "avg_r_win": 2.657836897078886,
+          "avg_r_loss": -1.6741360393525677,
+          "expectancy_r": -0.34140870739080986,
+          "signals": 7398,
+          "monthly": {
+            "2025-11-01": {
+              "trades": 145,
+              "win_rate": 0.3103448275862069
+            },
+            "2025-12-01": {
+              "trades": 163,
+              "win_rate": 0.24539877300613497
+            },
+            "2026-01-01": {
+              "trades": 153,
+              "win_rate": 0.37254901960784315
+            },
+            "2026-02-01": {
+              "trades": 116,
+              "win_rate": 0.3275862068965517
+            },
+            "2026-03-01": {
+              "trades": 165,
+              "win_rate": 0.3090909090909091
+            },
+            "2026-04-01": {
+              "trades": 151,
+              "win_rate": 0.33112582781456956
+            },
+            "2026-05-01": {
+              "trades": 141,
+              "win_rate": 0.2907801418439716
+            },
+            "2026-06-01": {
+              "trades": 136,
+              "win_rate": 0.29411764705882354
+            },
+            "2026-07-01": {
+              "trades": 156,
+              "win_rate": 0.23076923076923078
+            },
+            "2026-08-01": {
+              "trades": 145,
+              "win_rate": 0.33793103448275863
+            },
+            "2026-09-01": {
+              "trades": 142,
+              "win_rate": 0.34507042253521125
+            },
+            "2026-10-01": {
+              "trades": 165,
+              "win_rate": 0.3090909090909091
+            }
+          }
+        },
+        "B_causal_all": {
+          "trades": 1954,
+          "win_rate": 0.30348004094165815,
+          "avg_win": 0.00851401141538621,
+          "avg_loss": -0.0037241700820639504,
+          "payoff_ratio": 2.286149995240741,
+          "profit_factor": 0.996096213943982,
+          "expectancy": -1.0126260166332297e-05,
+          "total_return": -0.0024775475733490593,
+          "total_return_before_costs": 0.1483092393030072,
+          "total_cost_paid": 0.140755,
+          "max_drawdown": -0.03349625641873755,
+          "avg_r_win": 2.657771236621922,
+          "avg_r_loss": -1.6014282045643127,
+          "expectancy_r": -0.30884618377442685,
+          "signals": 8245,
+          "monthly": {
+            "2025-11-01": {
+              "trades": 154,
+              "win_rate": 0.33116883116883117
+            },
+            "2025-12-01": {
+              "trades": 162,
+              "win_rate": 0.25308641975308643
+            },
+            "2026-01-01": {
+              "trades": 166,
+              "win_rate": 0.29518072289156627
+            },
+            "2026-02-01": {
+              "trades": 150,
+              "win_rate": 0.32666666666666666
+            },
+            "2026-03-01": {
+              "trades": 170,
+              "win_rate": 0.34705882352941175
+            },
+            "2026-04-01": {
+              "trades": 144,
+              "win_rate": 0.3402777777777778
+            },
+            "2026-05-01": {
+              "trades": 173,
+              "win_rate": 0.2774566473988439
+            },
+            "2026-06-01": {
+              "trades": 159,
+              "win_rate": 0.3270440251572327
+            },
+            "2026-07-01": {
+              "trades": 163,
+              "win_rate": 0.2392638036809816
+            },
+            "2026-08-01": {
+              "trades": 178,
+              "win_rate": 0.3089887640449438
+            },
+            "2026-09-01": {
+              "trades": 161,
+              "win_rate": 0.3105590062111801
+            },
+            "2026-10-01": {
+              "trades": 174,
+              "win_rate": 0.29310344827586204
+            }
+          }
+        },
+        "B_causal_fvg_only": {
+          "trades": 1935,
+          "win_rate": 0.30129198966408266,
+          "avg_win": 0.00844320849555791,
+          "avg_loss": -0.0036959725847101935,
+          "payoff_ratio": 2.2844348279222837,
+          "profit_factor": 0.9850780360049494,
+          "expectancy": -3.8534564143628155e-05,
+          "total_return": -0.007913766005859246,
+          "total_return_before_costs": 0.1407214071637326,
+          "total_cost_paid": 0.13959000000000002,
+          "max_drawdown": -0.038206595892365636,
+          "avg_r_win": 2.658141814297326,
+          "avg_r_loss": -1.6524643724031658,
+          "expectancy_r": -0.3537132577538702,
+          "signals": 7350,
+          "monthly": {
+            "2025-11-01": {
+              "trades": 151,
+              "win_rate": 0.32450331125827814
+            },
+            "2025-12-01": {
+              "trades": 161,
+              "win_rate": 0.2484472049689441
+            },
+            "2026-01-01": {
+              "trades": 170,
+              "win_rate": 0.3058823529411765
+            },
+            "2026-02-01": {
+              "trades": 136,
+              "win_rate": 0.3235294117647059
+            },
+            "2026-03-01": {
+              "trades": 162,
+              "win_rate": 0.35802469135802467
+            },
+            "2026-04-01": {
+              "trades": 145,
+              "win_rate": 0.3310344827586207
+            },
+            "2026-05-01": {
+              "trades": 176,
+              "win_rate": 0.2840909090909091
+            },
+            "2026-06-01": {
+              "trades": 158,
+              "win_rate": 0.3227848101265823
+            },
+            "2026-07-01": {
+              "trades": 164,
+              "win_rate": 0.23780487804878048
+            },
+            "2026-08-01": {
+              "trades": 175,
+              "win_rate": 0.29714285714285715
+            },
+            "2026-09-01": {
+              "trades": 164,
+              "win_rate": 0.3048780487804878
+            },
+            "2026-10-01": {
+              "trades": 173,
+              "win_rate": 0.28901734104046245
+            }
+          }
+        },
+        "C1_sweep": {
+          "trades": 707,
+          "win_rate": 0.31117397454031115,
+          "avg_win": 0.008085142212441877,
+          "avg_loss": -0.00382700796431551,
+          "payoff_ratio": 2.1126536155217974,
+          "profit_factor": 0.9543815100919824,
+          "expectancy": -0.00012025684849284416,
+          "total_return": -0.008632765964338374,
+          "total_return_before_costs": 0.04320320194111571,
+          "total_cost_paid": 0.050960000000000005,
+          "max_drawdown": -0.01696611945221449,
+          "avg_r_win": 2.586418553562664,
+          "avg_r_loss": -1.6465890591528642,
+          "expectancy_r": -0.32938725604477914,
+          "signals": 1566,
+          "monthly": {
+            "2025-11-01": {
+              "trades": 55,
+              "win_rate": 0.2727272727272727
+            },
+            "2025-12-01": {
+              "trades": 53,
+              "win_rate": 0.33962264150943394
+            },
+            "2026-01-01": {
+              "trades": 65,
+              "win_rate": 0.3384615384615385
+            },
+            "2026-02-01": {
+              "trades": 51,
+              "win_rate": 0.35294117647058826
+            },
+            "2026-03-01": {
+              "trades": 65,
+              "win_rate": 0.2923076923076923
+            },
+            "2026-04-01": {
+              "trades": 60,
+              "win_rate": 0.3333333333333333
+            },
+            "2026-05-01": {
+              "trades": 57,
+              "win_rate": 0.2807017543859649
+            },
+            "2026-06-01": {
+              "trades": 47,
+              "win_rate": 0.2978723404255319
+            },
+            "2026-07-01": {
+              "trades": 54,
+              "win_rate": 0.3148148148148148
+            },
+            "2026-08-01": {
+              "trades": 61,
+              "win_rate": 0.4262295081967213
+            },
+            "2026-09-01": {
+              "trades": 73,
+              "win_rate": 0.2876712328767123
+            },
+            "2026-10-01": {
+              "trades": 66,
+              "win_rate": 0.21212121212121213
+            }
+          }
+        },
+        "C2_+displacement": {
+          "trades": 120,
+          "win_rate": 0.30833333333333335,
+          "avg_win": 0.012150415722372682,
+          "avg_loss": -0.0056383976100083475,
+          "payoff_ratio": 2.154941272819299,
+          "profit_factor": 0.9606364710158322,
+          "expectancy": -0.00015351349919086356,
+          "total_return": -0.001893272324441142,
+          "total_return_before_costs": 0.007116625326444304,
+          "total_cost_paid": 0.008985,
+          "max_drawdown": -0.01029193996997102,
+          "avg_r_win": 2.310037635732626,
+          "avg_r_loss": -1.2521569578141862,
+          "expectancy_r": -0.15381362480391933,
+          "signals": 156,
+          "monthly": {
+            "2025-11-01": {
+              "trades": 13,
+              "win_rate": 0.38461538461538464
+            },
+            "2025-12-01": {
+              "trades": 6,
+              "win_rate": 0.16666666666666666
+            },
+            "2026-01-01": {
+              "trades": 12,
+              "win_rate": 0.3333333333333333
+            },
+            "2026-02-01": {
+              "trades": 6,
+              "win_rate": 0.5
+            },
+            "2026-03-01": {
+              "trades": 11,
+              "win_rate": 0.18181818181818182
+            },
+            "2026-04-01": {
+              "trades": 6,
+              "win_rate": 0.5
+            },
+            "2026-05-01": {
+              "trades": 13,
+              "win_rate": 0.23076923076923078
+            },
+            "2026-06-01": {
+              "trades": 9,
+              "win_rate": 0.3333333333333333
+            },
+            "2026-07-01": {
+              "trades": 14,
+              "win_rate": 0.2857142857142857
+            },
+            "2026-08-01": {
+              "trades": 6,
+              "win_rate": 0.16666666666666666
+            },
+            "2026-09-01": {
+              "trades": 13,
+              "win_rate": 0.46153846153846156
+            },
+            "2026-10-01": {
+              "trades": 11,
+              "win_rate": 0.18181818181818182
+            }
+          }
+        },
+        "C3_+discount": {
+          "trades": 53,
+          "win_rate": 0.3018867924528302,
+          "avg_win": 0.013516698728658284,
+          "avg_loss": -0.005184028348717558,
+          "payoff_ratio": 2.6073736136111387,
+          "profit_factor": 1.127512913994006,
+          "expectancy": 0.00046147416520722536,
+          "total_return": 0.0024244222773373014,
+          "total_return_before_costs": 0.00645259200827919,
+          "total_cost_paid": 0.004009999999999999,
+          "max_drawdown": -0.0033935579814426964,
+          "avg_r_win": 2.3034199025317688,
+          "avg_r_loss": -1.2689681668115553,
+          "expectancy_r": -0.19051139116074042,
+          "signals": 66,
+          "monthly": {
+            "2025-11-01": {
+              "trades": 9,
+              "win_rate": 0.3333333333333333
+            },
+            "2025-12-01": {
+              "trades": 2,
+              "win_rate": 0.5
+            },
+            "2026-01-01": {
+              "trades": 3,
+              "win_rate": 0.0
+            },
+            "2026-02-01": {
+              "trades": 3,
+              "win_rate": 0.3333333333333333
+            },
+            "2026-03-01": {
+              "trades": 8,
+              "win_rate": 0.25
+            },
+            "2026-04-01": {
+              "trades": 2,
+              "win_rate": 1.0
+            },
+            "2026-05-01": {
+              "trades": 5,
+              "win_rate": 0.4
+            },
+            "2026-06-01": {
+              "trades": 3,
+              "win_rate": 0.3333333333333333
+            },
+            "2026-07-01": {
+              "trades": 8,
+              "win_rate": 0.25
+            },
+            "2026-08-01": {
+              "trades": 1,
+              "win_rate": 0.0
+            },
+            "2026-09-01": {
+              "trades": 4,
+              "win_rate": 0.25
+            },
+            "2026-10-01": {
+              "trades": 5,
+              "win_rate": 0.2
+            }
+          }
+        },
+        "C4_+killzone": {
+          "trades": 28,
+          "win_rate": 0.32142857142857145,
+          "avg_win": 0.012796629819453679,
+          "avg_loss": -0.005364712222323582,
+          "payoff_ratio": 2.3853338798313324,
+          "profit_factor": 1.1298949957095783,
+          "expectancy": 0.00047286200539053806,
+          "total_return": 0.0013130633632250088,
+          "total_return_before_costs": 0.0034733262970458867,
+          "total_cost_paid": 0.0021550000000000002,
+          "max_drawdown": -0.0030061394934451924,
+          "avg_r_win": 2.1089909820315023,
+          "avg_r_loss": -1.228906849411847,
+          "expectancy_r": -0.15601111787648464,
+          "signals": 34,
+          "monthly": {
+            "2025-11-01": {
+              "trades": 5,
+              "win_rate": 0.4
+            },
+            "2025-12-01": {
+              "trades": 2,
+              "win_rate": 0.5
+            },
+            "2026-01-01": {
+              "trades": 2,
+              "win_rate": 0.0
+            },
+            "2026-02-01": {
+              "trades": 1,
+              "win_rate": 0.0
+            },
+            "2026-03-01": {
+              "trades": 5,
+              "win_rate": 0.4
+            },
+            "2026-04-01": {
+              "trades": 1,
+              "win_rate": 1.0
+            },
+            "2026-05-01": {
+              "trades": 1,
+              "win_rate": 0.0
+            },
+            "2026-06-01": {
+              "trades": 1,
+              "win_rate": 0.0
+            },
+            "2026-07-01": {
+              "trades": 5,
+              "win_rate": 0.2
+            },
+            "2026-08-01": {
+              "trades": 0,
+              "win_rate": null
+            },
+            "2026-09-01": {
+              "trades": 3,
+              "win_rate": 0.3333333333333333
+            },
+            "2026-10-01": {
+              "trades": 2,
+              "win_rate": 0.5
+            }
+          }
+        },
+        "C5_+cvd_absorption": {
+          "trades": 10,
+          "win_rate": 0.3,
+          "avg_win": 0.01578099270210054,
+          "avg_loss": -0.0043232298535400135,
+          "payoff_ratio": 3.6502784345779133,
+          "profit_factor": 1.564405043390534,
+          "expectancy": 0.0017080369131521535,
+          "total_return": 0.0017045867857685693,
+          "total_return_before_costs": 0.002421102387099472,
+          "total_cost_paid": 0.000715,
+          "max_drawdown": -0.0008752197985989474,
+          "avg_r_win": 2.911545930220388,
+          "avg_r_loss": -1.2671798383157022,
+          "expectancy_r": -0.01356210775487523,
+          "signals": 12,
+          "monthly": {
+            "2025-11-01": {
+              "trades": 2,
+              "win_rate": 0.0
+            },
+            "2025-12-01": {
+              "trades": 1,
+              "win_rate": 1.0
+            },
+            "2026-01-01": {
+              "trades": 1,
+              "win_rate": 0.0
+            },
+            "2026-02-01": {
+              "trades": 1,
+              "win_rate": 0.0
+            },
+            "2026-03-01": {
+              "trades": 1,
+              "win_rate": 1.0
+            },
+            "2026-04-01": {
+              "trades": 0,
+              "win_rate": null
+            },
+            "2026-05-01": {
+              "trades": 0,
+              "win_rate": null
+            },
+            "2026-06-01": {
+              "trades": 0,
+              "win_rate": null
+            },
+            "2026-07-01": {
+              "trades": 1,
+              "win_rate": 0.0
+            },
+            "2026-08-01": {
+              "trades": 0,
+              "win_rate": null
+            },
+            "2026-09-01": {
+              "trades": 3,
+              "win_rate": 0.3333333333333333
+            }
+          }
+        }
+      },
+      "provenance": {
+        "script": "quant_lab/episodes/ep03/smc_backtest.py",
+        "params": {
+          "symbol": "BTCUSDT",
+          "interval": "15m",
+          "range": [
+            "2025-11-01",
+            "2026-10-31"
+          ],
+          "rr": 3.0,
+          "swing": 10,
+          "disp_atr": 1.8,
+          "body_min": 0.75,
+          "range_bars": 96,
+          "killzones_utc": [
+            [
+              6.0,
+              10.0
+            ],
+            [
+              11.5,
+              15.5
+            ]
+          ],
+          "fill": "through",
+          "position_frac": 0.1,
+          "costs": {
+            "taker_fee": 0.0005,
+            "maker_fee": 0.0002,
+            "slippage_bps": 1.5
+          }
+        },
+        "seed": null,
+        "data_sources": [
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2025-11.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2025-12.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2026-01.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2026-02.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2026-03.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2026-04.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2026-05.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2026-06.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2026-07.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2026-08.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2026-09.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2026-10.zip"
+        ],
+        "generated_at": "2026-11-05T16:14:59+00:00",
+        "note": ""
+      }
+    }
+  }
+}

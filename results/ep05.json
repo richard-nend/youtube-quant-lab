@@ -1,0 +1,1553 @@
+{
+  "episode": "ep05",
+  "experiments": {
+    "edgar_forensics": {
+      "values": {
+        "screened": 55,
+        "seconds_compute_only": 3.6216718750074506,
+        "n_flag_dso": 9,
+        "n_flag_inventory": 15,
+        "red_flags": [
+          {
+            "ticker": "DELL",
+            "fy_end": "2026-01-30",
+            "dso": 56.53195405943384,
+            "dso_prev": 39.33125451254094,
+            "dso_change": 0.43732903412497026,
+            "revenue_growth": 0.1880460828528676,
+            "inventory_growth": 0.5540500297796307,
+            "flag_dso": true,
+            "flag_inventory": true,
+            "red_flag": true
+          }
+        ],
+        "all": [
+          {
+            "ticker": "NVDA",
+            "fy_end": "2022-01-30",
+            "dso": 63.06197518020361,
+            "dso_prev": 53.16851574212894,
+            "dso_change": 0.18607740502026893,
+            "revenue_growth": 0.6140329835082459,
+            "inventory_growth": 0.4266155531215772,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "AAPL",
+            "fy_end": "2026-09-26",
+            "dso": 33.40031200791923,
+            "dso_prev": 34.88699085209811,
+            "dso_change": -0.04261413231314748,
+            "revenue_growth": 0.1505979656911629,
+            "inventory_growth": 1.54302203567681,
+            "flag_dso": false,
+            "flag_inventory": true,
+            "red_flag": false
+          },
+          {
+            "ticker": "MSFT",
+            "fy_end": "2026-06-30",
+            "dso": 88.95801879827266,
+            "dso_prev": 90.56851741420681,
+            "dso_change": -0.01778210201419861,
+            "revenue_growth": 0.17788686799846665,
+            "inventory_growth": 0.4893390191897655,
+            "flag_dso": false,
+            "flag_inventory": true,
+            "red_flag": false
+          },
+          {
+            "ticker": "GOOGL",
+            "fy_end": "2024-12-31",
+            "dso": 54.580335868441054,
+            "dso_prev": 56.95251045888989,
+            "dso_change": -0.04165180026894766,
+            "revenue_growth": 0.1386624332290156,
+            "inventory_growth": null,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "AMZN",
+            "fy_end": "2025-12-31",
+            "dso": 34.482155709670764,
+            "dso_prev": 31.72557327351758,
+            "dso_change": 0.0868883412251591,
+            "revenue_growth": 0.12377754683294695,
+            "inventory_growth": 0.12015549190389896,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "META",
+            "fy_end": "2025-12-31",
+            "dso": 35.905003831493886,
+            "dso_prev": 37.70682245092735,
+            "dso_change": -0.0477849498397378,
+            "revenue_growth": 0.22167038498246217,
+            "inventory_growth": null,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "AVGO",
+            "fy_end": "2025-11-02",
+            "dso": 40.82090253103135,
+            "dso_prev": 31.252956916275643,
+            "dso_change": 0.3061452918003096,
+            "revenue_growth": 0.23874432853763516,
+            "inventory_growth": 0.2897727272727273,
+            "flag_dso": true,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "TSLA",
+            "fy_end": "2025-12-31",
+            "dso": 17.613548883756735,
+            "dso_prev": 16.507011976660866,
+            "dso_change": 0.0670343553794226,
+            "revenue_growth": -0.02930699150373628,
+            "inventory_growth": 0.031205791794957083,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "LLY",
+            "fy_end": "2025-12-31",
+            "dso": 99.4553460470397,
+            "dso_prev": 89.18566702928314,
+            "dso_change": 0.1151494333095544,
+            "revenue_growth": 0.44703949559309986,
+            "inventory_growth": 0.8110422980629859,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "MU",
+            "fy_end": "2026-09-03",
+            "dso": 87.12830735501697,
+            "dso_prev": 69.94742896891219,
+            "dso_change": 0.24562558823628433,
+            "revenue_growth": 2.563272513243084,
+            "inventory_growth": 0.24141232794733702,
+            "flag_dso": true,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "AMD",
+            "fy_end": "2025-12-27",
+            "dso": 66.54276971044199,
+            "dso_prev": 87.65095986038394,
+            "dso_change": -0.24082098112290418,
+            "revenue_growth": 0.3433779329067288,
+            "inventory_growth": 0.3812347401464946,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "V",
+            "fy_end": "2025-09-30",
+            "dso": 28.524749999999997,
+            "dso_prev": 26.019178310972553,
+            "dso_change": 0.09629711050370937,
+            "revenue_growth": 0.11339976618604908,
+            "inventory_growth": null,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "JNJ",
+            "fy_end": "2025-12-28",
+            "dso": 66.56513753675964,
+            "dso_prev": 60.99154479233515,
+            "dso_change": 0.09138303945901893,
+            "revenue_growth": 0.06048119251078021,
+            "inventory_growth": 0.14038894246223088,
+            "flag_dso": false,
+            "flag_inventory": true,
+            "red_flag": false
+          },
+          {
+            "ticker": "MA",
+            "fy_end": "2021-12-31",
+            "dso": 36.76294186630926,
+            "dso_prev": 40.895579268292686,
+            "dso_change": -0.10105340175943067,
+            "revenue_growth": 0.26376185636856375,
+            "inventory_growth": null,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "ABBV",
+            "fy_end": "2025-12-31",
+            "dso": 75.13055918901243,
+            "dso_prev": 70.74652962686832,
+            "dso_change": 0.06196812176182176,
+            "revenue_growth": 0.08566762523520421,
+            "inventory_growth": 0.18416646735230802,
+            "flag_dso": false,
+            "flag_inventory": true,
+            "red_flag": false
+          },
+          {
+            "ticker": "CVX",
+            "fy_end": "2025-12-31",
+            "dso": 31.63708033313091,
+            "dso_prev": 34.60644007155635,
+            "dso_change": -0.08580367504677278,
+            "revenue_growth": -0.046439244315302886,
+            "inventory_growth": 0.07020057306590255,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "PLTR",
+            "fy_end": "2025-12-31",
+            "dso": 84.98677561968125,
+            "dso_prev": 73.24795228209179,
+            "dso_change": 0.16026145403193004,
+            "revenue_growth": 0.5618339093221549,
+            "inventory_growth": null,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "KO",
+            "fy_end": "2025-12-31",
+            "dso": 23.129888821676644,
+            "dso_prev": 27.680776014109345,
+            "dso_change": -0.16440605531120367,
+            "revenue_growth": 0.018699135164998548,
+            "inventory_growth": -0.0640862944162437,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "CSCO",
+            "fy_end": "2026-07-25",
+            "dso": 43.056454796683774,
+            "dso_prev": 43.17197373530554,
+            "dso_change": -0.0026757854373310463,
+            "revenue_growth": 0.1177498499664631,
+            "inventory_growth": 0.7996207332490519,
+            "flag_dso": false,
+            "flag_inventory": true,
+            "red_flag": false
+          },
+          {
+            "ticker": "ORCL",
+            "fy_end": "2026-05-31",
+            "dso": 56.27514586457235,
+            "dso_prev": 54.42028606770153,
+            "dso_change": 0.034083977334541826,
+            "revenue_growth": 0.1734873429850694,
+            "inventory_growth": null,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "PG",
+            "fy_end": "2026-06-30",
+            "dso": 25.398014523393694,
+            "dso_prev": 26.784739689620803,
+            "dso_change": -0.05177295662740644,
+            "revenue_growth": 0.03260405296378899,
+            "inventory_growth": 0.0819758972321547,
+            "flag_dso": false,
+            "flag_inventory": true,
+            "red_flag": false
+          },
+          {
+            "ticker": "UNH",
+            "fy_end": "2025-12-31",
+            "dso": 18.771647596896106,
+            "dso_prev": 20.39388874732061,
+            "dso_change": -0.0795454545488602,
+            "revenue_growth": 0.11814039242726304,
+            "inventory_growth": -0.13157894736842102,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "MRK",
+            "fy_end": "2025-12-31",
+            "dso": 66.10996600575287,
+            "dso_prev": 58.46325271163197,
+            "dso_change": 0.13079520792040178,
+            "revenue_growth": 0.013137389352948503,
+            "inventory_growth": 0.08986740874120147,
+            "flag_dso": false,
+            "flag_inventory": true,
+            "red_flag": false
+          },
+          {
+            "ticker": "GE",
+            "fy_end": "2018-12-31",
+            "dso": 47.07841962956765,
+            "dso_prev": 79.62912731598298,
+            "dso_change": -0.4087789077136078,
+            "revenue_growth": 0.023204887895609483,
+            "inventory_growth": -0.28920129769813074,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "HD",
+            "fy_end": "2026-02-01",
+            "dso": 12.405075205090993,
+            "dso_prev": 11.219046604059832,
+            "dso_change": 0.10571563189709665,
+            "revenue_growth": 0.032404679213109855,
+            "inventory_growth": 0.10089121999061867,
+            "flag_dso": false,
+            "flag_inventory": true,
+            "red_flag": false
+          },
+          {
+            "ticker": "PM",
+            "fy_end": "2025-12-31",
+            "dso": 41.05441842157056,
+            "dso_prev": 36.51156344051956,
+            "dso_change": 0.1244223624784433,
+            "revenue_growth": 0.07312952109403881,
+            "inventory_growth": 0.21421770866391632,
+            "flag_dso": false,
+            "flag_inventory": true,
+            "red_flag": false
+          },
+          {
+            "ticker": "INTC",
+            "fy_end": "2025-12-27",
+            "dso": 26.511929313378616,
+            "dso_prev": 23.906706088397584,
+            "dso_change": 0.10897457873736105,
+            "revenue_growth": -0.004670345191239322,
+            "inventory_growth": -0.047548778488276766,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "AMAT",
+            "fy_end": "2025-10-26",
+            "dso": 66.71337422447829,
+            "dso_prev": 70.29768913747424,
+            "dso_change": -0.05098766342072014,
+            "revenue_growth": 0.04386223138063006,
+            "inventory_growth": 0.09112709832134303,
+            "flag_dso": false,
+            "flag_inventory": true,
+            "red_flag": false
+          },
+          {
+            "ticker": "LRCX",
+            "fy_end": "2026-06-28",
+            "dso": 83.88972305832858,
+            "dso_prev": 66.88127953153224,
+            "dso_change": 0.25430798641909114,
+            "revenue_growth": 0.26020858240997,
+            "inventory_growth": -0.007400201161051667,
+            "flag_dso": true,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "PANW",
+            "fy_end": "2026-07-31",
+            "dso": 115.38196864111498,
+            "dso_prev": 117.36525322633119,
+            "dso_change": -0.016898396507453284,
+            "revenue_growth": 0.2449842750244009,
+            "inventory_growth": 0.03539823008849563,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "CAT",
+            "fy_end": "2025-12-31",
+            "dso": 58.97113435618221,
+            "dso_prev": 52.27560986899967,
+            "dso_change": 0.1280812314569113,
+            "revenue_growth": 0.04289527689055528,
+            "inventory_growth": 0.07773221608129788,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "TXN",
+            "fy_end": "2025-12-31",
+            "dso": 40.52115145345549,
+            "dso_prev": 40.114762483217184,
+            "dso_change": 0.010130658767039336,
+            "revenue_growth": 0.13049037785307838,
+            "inventory_growth": 0.06118842500552235,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "TMO",
+            "fy_end": "2025-12-31",
+            "dso": 72.90825029176766,
+            "dso_prev": 69.72445719349798,
+            "dso_change": 0.045662501027925906,
+            "revenue_growth": 0.039110053872525086,
+            "inventory_growth": 0.08979509843310574,
+            "flag_dso": false,
+            "flag_inventory": true,
+            "red_flag": false
+          },
+          {
+            "ticker": "DELL",
+            "fy_end": "2026-01-30",
+            "dso": 56.53195405943384,
+            "dso_prev": 39.33125451254094,
+            "dso_change": 0.43732903412497026,
+            "revenue_growth": 0.1880460828528676,
+            "inventory_growth": 0.5540500297796307,
+            "flag_dso": true,
+            "flag_inventory": true,
+            "red_flag": true
+          },
+          {
+            "ticker": "AMGN",
+            "fy_end": "2025-12-31",
+            "dso": 95.04639329542054,
+            "dso_prev": 74.06145284825274,
+            "dso_change": 0.28334497420898064,
+            "revenue_growth": 0.09953925323121116,
+            "inventory_growth": -0.1104601314661332,
+            "flag_dso": true,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "LIN",
+            "fy_end": "2025-12-31",
+            "dso": 53.333431412934736,
+            "dso_prev": 51.114376609604605,
+            "dso_change": 0.04341351593268117,
+            "revenue_growth": 0.029722769277382266,
+            "inventory_growth": 0.05601233299075026,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "IBM",
+            "fy_end": "2025-12-31",
+            "dso": 43.84215591915303,
+            "dso_prev": 39.575159753318566,
+            "dso_change": 0.10782006168595837,
+            "revenue_growth": 0.07620352811817765,
+            "inventory_growth": -0.053529868114817636,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "ANET",
+            "fy_end": "2025-12-31",
+            "dso": 76.47584307716224,
+            "dso_prev": 59.44260398966173,
+            "dso_change": 0.28654934246257,
+            "revenue_growth": 0.28595907526666764,
+            "inventory_growth": 0.22484465278534826,
+            "flag_dso": true,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "GILD",
+            "fy_end": "2025-12-31",
+            "dso": 60.905648201609885,
+            "dso_prev": 56.106976420671906,
+            "dso_change": 0.08552718551359995,
+            "revenue_growth": 0.023961883564025843,
+            "inventory_growth": 0.037426900584795364,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "APH",
+            "fy_end": "2025-12-31",
+            "dso": 74.55136892880185,
+            "dso_prev": 78.83512780255802,
+            "dso_change": -0.054338199139916554,
+            "revenue_growth": 0.5171224552806006,
+            "inventory_growth": 0.3453666967828102,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "ADI",
+            "fy_end": "2025-11-01",
+            "dso": 47.56636224538457,
+            "dso_prev": 51.739969430868705,
+            "dso_change": -0.08066504931087404,
+            "revenue_growth": 0.16893216056548122,
+            "inventory_growth": 0.14411678767578895,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "KLAC",
+            "fy_end": "2026-06-30",
+            "dso": 77.65843983965213,
+            "dso_prev": 67.97614041339692,
+            "dso_change": 0.14243673393888368,
+            "revenue_growth": 0.1170858038910636,
+            "inventory_growth": 0.13585577754954703,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "ABT",
+            "fy_end": "2025-12-31",
+            "dso": 65.28796697347049,
+            "dso_prev": 60.25327771156139,
+            "dso_change": 0.08355876150025687,
+            "revenue_growth": 0.05668653158522052,
+            "inventory_growth": 0.047465288989344545,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "VZ",
+            "fy_end": "2021-12-31",
+            "dso": 65.14179009527516,
+            "dso_prev": 68.04559130733016,
+            "dso_change": -0.042674347540605395,
+            "revenue_growth": 0.041475696068344,
+            "inventory_growth": 0.7010022271714922,
+            "flag_dso": false,
+            "flag_inventory": true,
+            "red_flag": false
+          },
+          {
+            "ticker": "CRM",
+            "fy_end": "2026-01-31",
+            "dso": 126.03816977724263,
+            "dso_prev": 115.05277741126798,
+            "dso_change": 0.09548133137808779,
+            "revenue_growth": 0.09579100145137875,
+            "inventory_growth": null,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "UNP",
+            "fy_end": "2025-12-31",
+            "dso": 27.698898408812727,
+            "dso_prev": 28.507628865979378,
+            "dso_change": -0.028368913492197834,
+            "revenue_growth": 0.010721649484536133,
+            "inventory_growth": null,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "NEE",
+            "fy_end": "2012-12-31",
+            "dso": 38.07203984287318,
+            "dso_prev": 32.6432435955935,
+            "dso_change": 0.16630688771420088,
+            "revenue_growth": -0.07072550681181144,
+            "inventory_growth": -0.0009310986964617962,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "QCOM",
+            "fy_end": "2026-09-27",
+            "dso": 22.609346011131727,
+            "dso_prev": 23.53163670851775,
+            "dso_change": -0.03919364848311546,
+            "revenue_growth": -0.026284888447294708,
+            "inventory_growth": 0.32393502911431193,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "PFE",
+            "fy_end": "2023-12-31",
+            "dso": 82.91609380524021,
+            "dso_prev": 43.54885448781497,
+            "dso_change": 0.9039787562825619,
+            "revenue_growth": -0.44533896920244465,
+            "inventory_growth": 0.13450617971272694,
+            "flag_dso": true,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "TMUS",
+            "fy_end": "2025-12-31",
+            "dso": 20.14528530500855,
+            "dso_prev": 19.173710073710073,
+            "dso_change": 0.05067226048393447,
+            "revenue_growth": 0.0848771498771499,
+            "inventory_growth": 0.4965774735532047,
+            "flag_dso": false,
+            "flag_inventory": true,
+            "red_flag": false
+          },
+          {
+            "ticker": "DHR",
+            "fy_end": "2025-12-31",
+            "dso": 58.134361771409964,
+            "dso_prev": 54.073507853403136,
+            "dso_change": 0.07509876978974761,
+            "revenue_growth": 0.02902617801047125,
+            "inventory_growth": 0.06824034334763951,
+            "flag_dso": false,
+            "flag_inventory": true,
+            "red_flag": false
+          },
+          {
+            "ticker": "SNDK",
+            "fy_end": "2026-07-03",
+            "dso": 84.8686290003951,
+            "dso_prev": 53.0006798096533,
+            "dso_change": 0.601274347898789,
+            "revenue_growth": 1.7529571719918424,
+            "inventory_growth": 0.29773929773929764,
+            "flag_dso": true,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "ISRG",
+            "fy_end": "2025-12-31",
+            "dso": 55.388089063757484,
+            "dso_prev": 53.55192107374193,
+            "dso_change": 0.03428762130656571,
+            "revenue_growth": 0.20505022688904595,
+            "inventory_growth": 0.2372243141473911,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "ACN",
+            "fy_end": "2026-08-31",
+            "dso": 69.94439123176336,
+            "dso_prev": 68.44666684760722,
+            "dso_change": 0.021881626281243793,
+            "revenue_growth": 0.06473769593625955,
+            "inventory_growth": null,
+            "flag_dso": false,
+            "flag_inventory": false,
+            "red_flag": false
+          },
+          {
+            "ticker": "MRVL",
+            "fy_end": "2026-01-31",
+            "dso": 97.39450369755693,
+            "dso_prev": 65.08522185424722,
+            "dso_change": 0.4964150220715784,
+            "revenue_growth": 0.42087285211450776,
+            "inventory_growth": 0.3479654268233465,
+            "flag_dso": true,
+            "flag_inventory": false,
+            "red_flag": false
+          }
+        ],
+        "dcf_example": {
+          "ticker": "AAPL",
+          "fcf_last3_usd": {
+            "2024-09-28": 108807000000.0,
+            "2025-09-27": 98767000000.0,
+            "2026-09-26": 136056000000.0
+          },
+          "base_fcf": 114543333333.33333,
+          "enterprise_value_usd": 2010951356962.7432,
+          "assumptions": {
+            "wacc": 0.09,
+            "growth_5y": 0.05,
+            "terminal_growth": 0.025,
+            "note": "WACC/growth are assumptions, not 10-K data"
+          },
+          "ev_change_if_wacc": {
+            "wacc_0.08": 0.18398220223461514,
+            "wacc_0.10": -0.1348636282364406
+          }
+        }
+      },
+      "provenance": {
+        "script": "quant_lab/episodes/ep05/edgar_forensics.py",
+        "params": {
+          "universe": "first 100 of SEC company_tickers.json",
+          "dso_up": 0.2,
+          "inventory_vs_revenue": 2.0
+        },
+        "seed": null,
+        "data_sources": [
+          "https://www.sec.gov/files/company_tickers.json",
+          "https://data.sec.gov/api/xbrl/companyfacts/CIK0001045810.json",
+          "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+          "... companyfacts per CIK"
+        ],
+        "generated_at": "2026-11-05T16:33:16+00:00",
+        "note": ""
+      }
+    },
+    "ai_hedge_fund_probe": {
+      "values": {
+        "pipeline_experiment": {
+          "status": "blocked",
+          "reason": "financialdatasets.ai requires a paid key / x402 payment for all endpoints incl. AAPL",
+          "http_status_without_key": {
+            "prices": 402,
+            "financial-metrics": 402,
+            "news": 402,
+            "insider-trades": 402,
+            "company/facts": 402
+          }
+        },
+        "contamination": {
+          "self_reported_cutoff": "March 2026",
+          "by_window_end_bucket": {
+            "past": {
+              "n": 55,
+              "sign_accuracy": 1.0,
+              "always_up_sign_accuracy": 0.7272727272727273,
+              "mae_pp": 0.9327525752709556,
+              "median_ae_pp": 0.14105637075347488,
+              "baseline_mae_pp_predict_bucket_mean": 67.19367083597957,
+              "within_10pp": 0.9818181818181818,
+              "spearman": 0.9995490540777225,
+              "knows_true_share": 0.2545454545454545,
+              "mean_actual_pct": 59.270806499843026,
+              "mean_pred_pct": 59.859999999999985
+            },
+            "recent": {
+              "n": 10,
+              "sign_accuracy": 1.0,
+              "always_up_sign_accuracy": 0.9,
+              "mae_pp": 3.8707464809543852,
+              "median_ae_pp": 2.278952794968097,
+              "baseline_mae_pp_predict_bucket_mean": 49.692122288848815,
+              "within_10pp": 0.9,
+              "spearman": 0.9757575757575756,
+              "knows_true_share": 0.0,
+              "mean_actual_pct": 60.76361592492913,
+              "mean_pred_pct": 61.42
+            },
+            "future": {
+              "n": 15,
+              "sign_accuracy": 0.6,
+              "always_up_sign_accuracy": 0.8,
+              "mae_pp": 25.31590662037656,
+              "median_ae_pp": 16.171547010230192,
+              "baseline_mae_pp_predict_bucket_mean": 23.229123645334216,
+              "within_10pp": 0.26666666666666666,
+              "spearman": 0.09500193238144307,
+              "knows_true_share": 0.0,
+              "mean_actual_pct": 27.3395894132814,
+              "mean_pred_pct": 11.266666666666667
+            },
+            "all": {
+              "n": 80,
+              "sign_accuracy": 0.925,
+              "always_up_sign_accuracy": 0.7625,
+              "mae_pp": 5.871843196938685,
+              "median_ae_pp": 0.4117156118359091,
+              "baseline_mae_pp_predict_bucket_mean": 57.32792798789872,
+              "within_10pp": 0.8375,
+              "spearman": 0.9234060618081833,
+              "knows_true_share": 0.175,
+              "mean_actual_pct": 53.47030447424847,
+              "mean_pred_pct": 50.94375
+            }
+          },
+          "rows": [
+            {
+              "ticker": "AAPL",
+              "date": "2018-01-02",
+              "end": "2019-01-02",
+              "actual": -6.948309799861185,
+              "bucket": "past",
+              "pred": -6.7,
+              "knows": false
+            },
+            {
+              "ticker": "AAPL",
+              "date": "2018-07-02",
+              "end": "2019-07-02",
+              "actual": 9.956183112240446,
+              "bucket": "past",
+              "pred": 10.2,
+              "knows": false
+            },
+            {
+              "ticker": "AAPL",
+              "date": "2019-01-02",
+              "end": "2020-01-02",
+              "actual": 93.04879301363866,
+              "bucket": "past",
+              "pred": 92.5,
+              "knows": false
+            },
+            {
+              "ticker": "AAPL",
+              "date": "2019-07-01",
+              "end": "2020-06-30",
+              "actual": 83.15740224006755,
+              "bucket": "past",
+              "pred": 83.2,
+              "knows": false
+            },
+            {
+              "ticker": "AAPL",
+              "date": "2020-01-02",
+              "end": "2020-12-31",
+              "actual": 78.23997260358715,
+              "bucket": "past",
+              "pred": 77.5,
+              "knows": false
+            },
+            {
+              "ticker": "AAPL",
+              "date": "2020-07-01",
+              "end": "2021-07-01",
+              "actual": 51.8166888679511,
+              "bucket": "past",
+              "pred": 51.5,
+              "knows": true
+            },
+            {
+              "ticker": "AAPL",
+              "date": "2021-01-04",
+              "end": "2022-01-04",
+              "actual": 39.7170178781612,
+              "bucket": "past",
+              "pred": 39.8,
+              "knows": true
+            },
+            {
+              "ticker": "AAPL",
+              "date": "2021-07-01",
+              "end": "2022-07-01",
+              "actual": 1.7874923699722212,
+              "bucket": "past",
+              "pred": 1.8,
+              "knows": false
+            },
+            {
+              "ticker": "AAPL",
+              "date": "2022-01-03",
+              "end": "2023-01-03",
+              "actual": -30.885190643433656,
+              "bucket": "past",
+              "pred": -31.0,
+              "knows": false
+            },
+            {
+              "ticker": "AAPL",
+              "date": "2022-07-01",
+              "end": "2023-06-30",
+              "actual": 40.45078933210257,
+              "bucket": "past",
+              "pred": 41.1,
+              "knows": false
+            },
+            {
+              "ticker": "AAPL",
+              "date": "2023-01-03",
+              "end": "2024-01-03",
+              "actual": 48.140934691386605,
+              "bucket": "past",
+              "pred": 48.2,
+              "knows": false
+            },
+            {
+              "ticker": "AAPL",
+              "date": "2023-07-03",
+              "end": "2024-07-02",
+              "actual": 15.05756253982451,
+              "bucket": "recent",
+              "pred": 15.1,
+              "knows": false
+            },
+            {
+              "ticker": "AAPL",
+              "date": "2024-01-02",
+              "end": "2024-12-31",
+              "actual": 35.556342050952594,
+              "bucket": "recent",
+              "pred": 32.3,
+              "knows": false
+            },
+            {
+              "ticker": "AAPL",
+              "date": "2024-07-01",
+              "end": "2025-07-01",
+              "actual": -3.6715470102301917,
+              "bucket": "future",
+              "pred": 12.5,
+              "knows": false
+            },
+            {
+              "ticker": "AAPL",
+              "date": "2025-01-02",
+              "end": "2026-01-02",
+              "actual": 11.640629663130486,
+              "bucket": "future",
+              "pred": 12.0,
+              "knows": false
+            },
+            {
+              "ticker": "AAPL",
+              "date": "2025-07-01",
+              "end": "2026-07-01",
+              "actual": 42.21339641053983,
+              "bucket": "future",
+              "pred": 12.0,
+              "knows": false
+            },
+            {
+              "ticker": "GOOGL",
+              "date": "2018-01-02",
+              "end": "2019-01-02",
+              "actual": -1.7265954198254163,
+              "bucket": "past",
+              "pred": -1.7,
+              "knows": false
+            },
+            {
+              "ticker": "GOOGL",
+              "date": "2018-07-02",
+              "end": "2019-07-02",
+              "actual": -2.58379714496636,
+              "bucket": "past",
+              "pred": -2.0,
+              "knows": false
+            },
+            {
+              "ticker": "GOOGL",
+              "date": "2019-01-02",
+              "end": "2020-01-02",
+              "actual": 29.7720438412169,
+              "bucket": "past",
+              "pred": 29.8,
+              "knows": false
+            },
+            {
+              "ticker": "GOOGL",
+              "date": "2019-07-01",
+              "end": "2020-06-30",
+              "actual": 28.91363111291416,
+              "bucket": "past",
+              "pred": 31.1,
+              "knows": false
+            },
+            {
+              "ticker": "GOOGL",
+              "date": "2020-01-02",
+              "end": "2020-12-31",
+              "actual": 28.053328045157187,
+              "bucket": "past",
+              "pred": 28.1,
+              "knows": false
+            },
+            {
+              "ticker": "GOOGL",
+              "date": "2020-07-01",
+              "end": "2021-07-01",
+              "actual": 69.82595843358746,
+              "bucket": "past",
+              "pred": 73.4,
+              "knows": false
+            },
+            {
+              "ticker": "GOOGL",
+              "date": "2021-01-04",
+              "end": "2022-01-04",
+              "actual": 67.31008119413129,
+              "bucket": "past",
+              "pred": 67.6,
+              "knows": true
+            },
+            {
+              "ticker": "GOOGL",
+              "date": "2021-07-01",
+              "end": "2022-07-01",
+              "actual": -11.194458240930427,
+              "bucket": "past",
+              "pred": -11.8,
+              "knows": false
+            },
+            {
+              "ticker": "GOOGL",
+              "date": "2022-01-03",
+              "end": "2023-01-03",
+              "actual": -38.53433208011903,
+              "bucket": "past",
+              "pred": -38.5,
+              "knows": true
+            },
+            {
+              "ticker": "GOOGL",
+              "date": "2022-07-01",
+              "end": "2023-06-30",
+              "actual": 10.081605179280873,
+              "bucket": "past",
+              "pred": 10.1,
+              "knows": false
+            },
+            {
+              "ticker": "GOOGL",
+              "date": "2023-01-03",
+              "end": "2024-01-03",
+              "actual": 55.87970993074946,
+              "bucket": "past",
+              "pred": 55.5,
+              "knows": false
+            },
+            {
+              "ticker": "GOOGL",
+              "date": "2023-07-03",
+              "end": "2024-07-02",
+              "actual": 54.67274329806069,
+              "bucket": "recent",
+              "pred": 55.1,
+              "knows": false
+            },
+            {
+              "ticker": "GOOGL",
+              "date": "2024-01-02",
+              "end": "2024-12-31",
+              "actual": 37.5018200053201,
+              "bucket": "recent",
+              "pred": 36.4,
+              "knows": false
+            },
+            {
+              "ticker": "GOOGL",
+              "date": "2024-07-01",
+              "end": "2025-07-01",
+              "actual": -3.441856859329684,
+              "bucket": "future",
+              "pred": 12.5,
+              "knows": false
+            },
+            {
+              "ticker": "GOOGL",
+              "date": "2025-01-02",
+              "end": "2026-01-02",
+              "actual": 67.01909343379427,
+              "bucket": "future",
+              "pred": 15.0,
+              "knows": false
+            },
+            {
+              "ticker": "GOOGL",
+              "date": "2025-07-01",
+              "end": "2026-07-01",
+              "actual": 106.00571924330575,
+              "bucket": "future",
+              "pred": 0.0,
+              "knows": false
+            },
+            {
+              "ticker": "MSFT",
+              "date": "2018-01-02",
+              "end": "2019-01-02",
+              "actual": 19.68647544884543,
+              "bucket": "past",
+              "pred": 19.8,
+              "knows": false
+            },
+            {
+              "ticker": "MSFT",
+              "date": "2018-07-02",
+              "end": "2019-07-02",
+              "actual": 38.7839063242172,
+              "bucket": "past",
+              "pred": 38.5,
+              "knows": false
+            },
+            {
+              "ticker": "MSFT",
+              "date": "2019-01-02",
+              "end": "2020-01-02",
+              "actual": 61.189610940164506,
+              "bucket": "past",
+              "pred": 60.5,
+              "knows": false
+            },
+            {
+              "ticker": "MSFT",
+              "date": "2019-07-01",
+              "end": "2020-06-30",
+              "actual": 51.8383524491316,
+              "bucket": "past",
+              "pred": 52.5,
+              "knows": false
+            },
+            {
+              "ticker": "MSFT",
+              "date": "2020-01-02",
+              "end": "2020-12-31",
+              "actual": 39.94285516360596,
+              "bucket": "past",
+              "pred": 40.3,
+              "knows": false
+            },
+            {
+              "ticker": "MSFT",
+              "date": "2020-07-01",
+              "end": "2021-07-01",
+              "actual": 33.96673684753089,
+              "bucket": "past",
+              "pred": 34.1,
+              "knows": false
+            },
+            {
+              "ticker": "MSFT",
+              "date": "2021-01-04",
+              "end": "2022-01-04",
+              "actual": 52.40382547826749,
+              "bucket": "past",
+              "pred": 52.8,
+              "knows": false
+            },
+            {
+              "ticker": "MSFT",
+              "date": "2021-07-01",
+              "end": "2022-07-01",
+              "actual": -3.6452215945687594,
+              "bucket": "past",
+              "pred": -3.6,
+              "knows": false
+            },
+            {
+              "ticker": "MSFT",
+              "date": "2022-01-03",
+              "end": "2023-01-03",
+              "actual": -27.759540712298346,
+              "bucket": "past",
+              "pred": -28.2,
+              "knows": false
+            },
+            {
+              "ticker": "MSFT",
+              "date": "2022-07-01",
+              "end": "2023-06-30",
+              "actual": 32.45694639125407,
+              "bucket": "past",
+              "pred": 32.5,
+              "knows": false
+            },
+            {
+              "ticker": "MSFT",
+              "date": "2023-01-03",
+              "end": "2024-01-03",
+              "actual": 56.05894362924653,
+              "bucket": "past",
+              "pred": 56.2,
+              "knows": false
+            },
+            {
+              "ticker": "MSFT",
+              "date": "2023-07-03",
+              "end": "2024-07-02",
+              "actual": 36.94868601772323,
+              "bucket": "recent",
+              "pred": 36.5,
+              "knows": false
+            },
+            {
+              "ticker": "MSFT",
+              "date": "2024-01-02",
+              "end": "2024-12-31",
+              "actual": 14.501563538983596,
+              "bucket": "recent",
+              "pred": 13.2,
+              "knows": false
+            },
+            {
+              "ticker": "MSFT",
+              "date": "2024-07-01",
+              "end": "2025-07-01",
+              "actual": 8.559212907049352,
+              "bucket": "future",
+              "pred": 12.5,
+              "knows": false
+            },
+            {
+              "ticker": "MSFT",
+              "date": "2025-01-02",
+              "end": "2026-01-02",
+              "actual": 13.820242864708199,
+              "bucket": "future",
+              "pred": 12.5,
+              "knows": false
+            },
+            {
+              "ticker": "MSFT",
+              "date": "2025-07-01",
+              "end": "2026-07-01",
+              "actual": -21.278429199749894,
+              "bucket": "future",
+              "pred": 10.0,
+              "knows": false
+            },
+            {
+              "ticker": "NVDA",
+              "date": "2018-01-02",
+              "end": "2019-01-02",
+              "actual": -31.477258864010913,
+              "bucket": "past",
+              "pred": -31.0,
+              "knows": false
+            },
+            {
+              "ticker": "NVDA",
+              "date": "2018-07-02",
+              "end": "2019-07-02",
+              "actual": -32.77976958135991,
+              "bucket": "past",
+              "pred": -34.5,
+              "knows": false
+            },
+            {
+              "ticker": "NVDA",
+              "date": "2019-01-02",
+              "end": "2020-01-02",
+              "actual": 76.80733081782334,
+              "bucket": "past",
+              "pred": 76.5,
+              "knows": true
+            },
+            {
+              "ticker": "NVDA",
+              "date": "2019-07-01",
+              "end": "2020-06-30",
+              "actual": 129.26398904027505,
+              "bucket": "past",
+              "pred": 136.2,
+              "knows": false
+            },
+            {
+              "ticker": "NVDA",
+              "date": "2020-01-02",
+              "end": "2020-12-31",
+              "actual": 118.02415636311565,
+              "bucket": "past",
+              "pred": 121.5,
+              "knows": false
+            },
+            {
+              "ticker": "NVDA",
+              "date": "2020-07-01",
+              "end": "2021-07-01",
+              "actual": 112.33615832145283,
+              "bucket": "past",
+              "pred": 109.5,
+              "knows": false
+            },
+            {
+              "ticker": "NVDA",
+              "date": "2021-01-04",
+              "end": "2022-01-04",
+              "actual": 123.55273919915813,
+              "bucket": "past",
+              "pred": 126.8,
+              "knows": false
+            },
+            {
+              "ticker": "NVDA",
+              "date": "2021-07-01",
+              "end": "2022-07-01",
+              "actual": -28.097741885423623,
+              "bucket": "past",
+              "pred": -28.1,
+              "knows": false
+            },
+            {
+              "ticker": "NVDA",
+              "date": "2022-01-03",
+              "end": "2023-01-03",
+              "actual": -52.43057887335838,
+              "bucket": "past",
+              "pred": -52.5,
+              "knows": true
+            },
+            {
+              "ticker": "NVDA",
+              "date": "2022-07-01",
+              "end": "2023-06-30",
+              "actual": 191.51670676621046,
+              "bucket": "past",
+              "pred": 191.5,
+              "knows": false
+            },
+            {
+              "ticker": "NVDA",
+              "date": "2023-01-03",
+              "end": "2024-01-03",
+              "actual": 232.4491871746023,
+              "bucket": "past",
+              "pred": 232.3,
+              "knows": true
+            },
+            {
+              "ticker": "NVDA",
+              "date": "2023-07-03",
+              "end": "2024-07-02",
+              "actual": 189.31395888884919,
+              "bucket": "recent",
+              "pred": 202.5,
+              "knows": false
+            },
+            {
+              "ticker": "NVDA",
+              "date": "2024-01-02",
+              "end": "2024-12-31",
+              "actual": 178.87409991374423,
+              "bucket": "recent",
+              "pred": 182.4,
+              "knows": false
+            },
+            {
+              "ticker": "NVDA",
+              "date": "2024-07-01",
+              "end": "2025-07-01",
+              "actual": 23.36961144591625,
+              "bucket": "future",
+              "pred": 25.0,
+              "knows": false
+            },
+            {
+              "ticker": "NVDA",
+              "date": "2025-01-02",
+              "end": "2026-01-02",
+              "actual": 36.578449936846354,
+              "bucket": "future",
+              "pred": 15.0,
+              "knows": false
+            },
+            {
+              "ticker": "NVDA",
+              "date": "2025-07-01",
+              "end": "2026-07-01",
+              "actual": 29.056189067112935,
+              "bucket": "future",
+              "pred": 15.0,
+              "knows": false
+            },
+            {
+              "ticker": "TSLA",
+              "date": "2018-01-02",
+              "end": "2019-01-02",
+              "actual": -3.24774692109564,
+              "bucket": "past",
+              "pred": -3.2,
+              "knows": false
+            },
+            {
+              "ticker": "TSLA",
+              "date": "2018-07-02",
+              "end": "2019-07-02",
+              "actual": -32.9841494012959,
+              "bucket": "past",
+              "pred": -33.0,
+              "knows": true
+            },
+            {
+              "ticker": "TSLA",
+              "date": "2019-01-02",
+              "end": "2020-01-02",
+              "actual": 38.739838073413125,
+              "bucket": "past",
+              "pred": 38.7,
+              "knows": true
+            },
+            {
+              "ticker": "TSLA",
+              "date": "2019-07-01",
+              "end": "2020-06-30",
+              "actual": 375.3312619243399,
+              "bucket": "past",
+              "pred": 392.9,
+              "knows": true
+            },
+            {
+              "ticker": "TSLA",
+              "date": "2020-01-02",
+              "end": "2020-12-31",
+              "actual": 720.0506467423963,
+              "bucket": "past",
+              "pred": 720.1,
+              "knows": true
+            },
+            {
+              "ticker": "TSLA",
+              "date": "2020-07-01",
+              "end": "2021-07-01",
+              "actual": 202.74286971215548,
+              "bucket": "past",
+              "pred": 202.7,
+              "knows": true
+            },
+            {
+              "ticker": "TSLA",
+              "date": "2021-01-04",
+              "end": "2022-01-04",
+              "actual": 57.5277086054514,
+              "bucket": "past",
+              "pred": 57.5,
+              "knows": false
+            },
+            {
+              "ticker": "TSLA",
+              "date": "2021-07-01",
+              "end": "2022-07-01",
+              "actual": 0.5708676145158798,
+              "bucket": "past",
+              "pred": 0.5,
+              "knows": false
+            },
+            {
+              "ticker": "TSLA",
+              "date": "2022-01-03",
+              "end": "2023-01-03",
+              "actual": -72.97004486219816,
+              "bucket": "past",
+              "pred": -73.0,
+              "knows": true
+            },
+            {
+              "ticker": "TSLA",
+              "date": "2022-07-01",
+              "end": "2023-06-30",
+              "actual": 15.18355464273029,
+              "bucket": "past",
+              "pred": 15.2,
+              "knows": false
+            },
+            {
+              "ticker": "TSLA",
+              "date": "2023-01-03",
+              "end": "2024-01-03",
+              "actual": 120.5827940000634,
+              "bucket": "past",
+              "pred": 120.6,
+              "knows": true
+            },
+            {
+              "ticker": "TSLA",
+              "date": "2023-07-03",
+              "end": "2024-07-02",
+              "actual": -17.354017420604894,
+              "bucket": "recent",
+              "pred": -11.9,
+              "knows": false
+            },
+            {
+              "ticker": "TSLA",
+              "date": "2024-01-02",
+              "end": "2024-12-31",
+              "actual": 62.56340041643804,
+              "bucket": "recent",
+              "pred": 52.6,
+              "knows": false
+            },
+            {
+              "ticker": "TSLA",
+              "date": "2024-07-01",
+              "end": "2025-07-01",
+              "actual": 43.290760783618,
+              "bucket": "future",
+              "pred": 15.0,
+              "knows": false
+            },
+            {
+              "ticker": "TSLA",
+              "date": "2025-01-02",
+              "end": "2026-01-02",
+              "actual": 15.500424154750059,
+              "bucket": "future",
+              "pred": 0.0,
+              "knows": false
+            },
+            {
+              "ticker": "TSLA",
+              "date": "2025-07-01",
+              "end": "2026-07-01",
+              "actual": 41.43194435775928,
+              "bucket": "future",
+              "pred": 0.0,
+              "knows": false
+            }
+          ]
+        },
+        "llm_calls": 81
+      },
+      "provenance": {
+        "script": "quant_lab/episodes/ep05/ai_hedge_fund_probe.py",
+        "params": {
+          "model": "gemini-3.8-flash",
+          "backend": "vertex",
+          "temperature": 0.0,
+          "tickers": [
+            "AAPL",
+            "GOOGL",
+            "MSFT",
+            "NVDA",
+            "TSLA"
+          ],
+          "dates_rule": "first trading day of Jan and Jul 2018-2025",
+          "horizon": "last trading day <= date+365d",
+          "buckets": {
+            "past": "end<=2024-06-30",
+            "recent": "2024-07-01..2025-06-30",
+            "future": "end>=2025-07-01"
+          },
+          "legacy_commit": "6c41ae8cf5fb4e30eb8cdb6a816eb56ff234989d",
+          "restructure_commit": "a7a99e5b4cbbe789f4e16bd02d794e86a2a3a3d2",
+          "raw_log": "runs/ep05/contamination_calls_20261105T163638Z.jsonl"
+        },
+        "seed": null,
+        "data_sources": [
+          "https://query1.finance.yahoo.com/v8/finance/chart/ (adjclose)",
+          "https://github.com/virattt/ai-hedge-fund/tree/6c41ae8cf5fb4e30eb8cdb6a816eb56ff234989d"
+        ],
+        "generated_at": "2026-11-05T16:41:24+00:00",
+        "note": "Contamination probe only; persona pipeline (a)-(c) not run because no free data path exists."
+      }
+    }
+  }
+}

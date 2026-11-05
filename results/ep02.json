@@ -1,0 +1,193 @@
+{
+  "episode": "ep02",
+  "experiments": {
+    "crash_events": {
+      "values": {
+        "events": [
+          {
+            "trigger_time": "2024-03-05 05:02:00+00:00",
+            "ref_high": 68086.1,
+            "trigger_close": 66724.3,
+            "next60_low_pct": -0.025525932831067633,
+            "next60_close_pct": 0.002793584945814276
+          },
+          {
+            "trigger_time": "2024-03-06 12:45:00+00:00",
+            "ref_high": 67234.5,
+            "trigger_close": 65654.0,
+            "next60_low_pct": -0.01581777195601186,
+            "next60_close_pct": 0.005271575227709047
+          },
+          {
+            "trigger_time": "2024-03-08 16:01:00+00:00",
+            "ref_high": 68918.8,
+            "trigger_close": 67356.9,
+            "next60_low_pct": -0.018363374799018284,
+            "next60_close_pct": 0.00755824570311292
+          },
+          {
+            "trigger_time": "2024-03-15 03:25:00+00:00",
+            "ref_high": 69000.0,
+            "trigger_close": 67579.9,
+            "next60_low_pct": -0.013610555801354951,
+            "next60_close_pct": 0.0075628996195615805
+          },
+          {
+            "trigger_time": "2024-04-02 02:37:00+00:00",
+            "ref_high": 69000.0,
+            "trigger_close": 67271.4,
+            "next60_low_pct": -0.024845625332607812,
+            "next60_close_pct": -0.00516861548890013
+          },
+          {
+            "trigger_time": "2024-04-04 20:16:00+00:00",
+            "ref_high": 68795.0,
+            "trigger_close": 67376.3,
+            "next60_low_pct": -0.0012615712053051231,
+            "next60_close_pct": 0.006960904650448407
+          },
+          {
+            "trigger_time": "2024-04-12 17:28:00+00:00",
+            "ref_high": 69000.0,
+            "trigger_close": 67613.7,
+            "next60_low_pct": -0.0064336073902182545,
+            "next60_close_pct": 0.001916771305223719
+          },
+          {
+            "trigger_time": "2024-04-13 19:51:00+00:00",
+            "ref_high": 67267.2,
+            "trigger_close": 65794.9,
+            "next60_low_pct": -0.09335677993279101,
+            "next60_close_pct": -0.05890122182722357
+          },
+          {
+            "trigger_time": "2024-06-12 19:48:00+00:00",
+            "ref_high": 68875.0,
+            "trigger_close": 67402.2,
+            "next60_low_pct": -0.0027743901534371673,
+            "next60_close_pct": 0.010548617107453362
+          },
+          {
+            "trigger_time": "2024-07-21 18:08:00+00:00",
+            "ref_high": 67420.0,
+            "trigger_close": 66067.7,
+            "next60_low_pct": -0.004808703799284664,
+            "next60_close_pct": 0.01376920946241511
+          },
+          {
+            "trigger_time": "2024-07-27 20:22:00+00:00",
+            "ref_high": 68436.2,
+            "trigger_close": 66967.1,
+            "next60_low_pct": -0.005115944993885124,
+            "next60_close_pct": 0.03176037188410419
+          },
+          {
+            "trigger_time": "2024-10-15 14:37:00+00:00",
+            "ref_high": 67600.0,
+            "trigger_close": 66059.3,
+            "next60_low_pct": -0.019491578021565537,
+            "next60_close_pct": 0.001563746512603048
+          },
+          {
+            "trigger_time": "2024-10-25 18:09:00+00:00",
+            "ref_high": 67474.0,
+            "trigger_close": 66080.9,
+            "next60_low_pct": -0.001976365334007135,
+            "next60_close_pct": 0.01292657938980879
+          },
+          {
+            "trigger_time": "2026-02-05 15:22:00+00:00",
+            "ref_high": 68974.6,
+            "trigger_close": 67402.7,
+            "next60_low_pct": -0.010929829220491127,
+            "next60_close_pct": 0.003658607147784876
+          },
+          {
+            "trigger_time": "2026-02-07 07:17:00+00:00",
+            "ref_high": 68986.0,
+            "trigger_close": 67299.3,
+            "next60_low_pct": -0.0007325484811878669,
+            "next60_close_pct": 0.012303248325019833
+          },
+          {
+            "trigger_time": "2026-02-11 14:36:00+00:00",
+            "ref_high": 68821.1,
+            "trigger_close": 67256.7,
+            "next60_low_pct": -0.022870583897217633,
+            "next60_close_pct": -0.014240960380155432
+          },
+          {
+            "trigger_time": "2026-02-17 14:46:00+00:00",
+            "ref_high": 68225.0,
+            "trigger_close": 66837.3,
+            "next60_low_pct": -0.003729953184823498,
+            "next60_close_pct": 0.0034711156794184905
+          },
+          {
+            "trigger_time": "2026-02-20 15:16:00+00:00",
+            "ref_high": 68099.9,
+            "trigger_close": 66516.3,
+            "next60_low_pct": -0.00023302558921645122,
+            "next60_close_pct": 0.016114847037492996
+          },
+          {
+            "trigger_time": "2026-02-23 01:07:00+00:00",
+            "ref_high": 67262.2,
+            "trigger_close": 65841.4,
+            "next60_low_pct": -0.024431436755597447,
+            "next60_close_pct": -0.01932674578608584
+          },
+          {
+            "trigger_time": "2026-03-03 16:42:00+00:00",
+            "ref_high": 68972.9,
+            "trigger_close": 67590.0,
+            "next60_low_pct": -0.002219263204616073,
+            "next60_close_pct": 0.006450658381417451
+          },
+          {
+            "trigger_time": "2026-03-08 22:12:00+00:00",
+            "ref_high": 67013.8,
+            "trigger_close": 65652.8,
+            "next60_low_pct": -0.0012733653400922584,
+            "next60_close_pct": 0.008218994467867224
+          },
+          {
+            "trigger_time": "2026-03-27 11:00:00+00:00",
+            "ref_high": 67734.3,
+            "trigger_close": 66347.4,
+            "next60_low_pct": -0.0025924150757979936,
+            "next60_close_pct": 0.004762809092745179
+          },
+          {
+            "trigger_time": "2026-04-02 01:22:00+00:00",
+            "ref_high": 68639.1,
+            "trigger_close": 67250.0,
+            "next60_low_pct": -0.007739776951672828,
+            "next60_close_pct": -0.00576951672862458
+          }
+        ]
+      },
+      "provenance": {
+        "script": "quant_lab/episodes/ep02/crash_event_finder.py",
+        "params": {
+          "band": [
+            67000,
+            69000
+          ],
+          "drop": 0.02,
+          "lookback_min": 30,
+          "range": [
+            "2024-01-01",
+            "2026-10-31"
+          ]
+        },
+        "seed": null,
+        "data_sources": [
+          "data.binance.vision futures/um monthly klines BTCUSDT 1m 2024-01-01..2026-10-31"
+        ],
+        "generated_at": "2026-11-05T15:02:04+00:00",
+        "note": ""
+      }
+    }
+  }
+}

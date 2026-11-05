@@ -1,0 +1,92 @@
+{
+  "episode": "ep01",
+  "experiments": {
+    "fake_backtest_tricks": {
+      "values": {
+        "buy_and_hold": -0.2924006820181603,
+        "round_trip_cost": 0.0013,
+        "heikin_ashi": {
+          "fake_fills_no_fee": {
+            "trades": 2244,
+            "win_rate": 0.482174688057041,
+            "total_return": 251.77700361584502,
+            "win_rate_before_costs": 0.482174688057041,
+            "total_return_before_costs": 251.77700361584502
+          },
+          "real_fills_no_fee": {
+            "trades": 2243,
+            "win_rate": 0.3321444493981275,
+            "total_return": -0.20137841039086168,
+            "win_rate_before_costs": 0.3321444493981275,
+            "total_return_before_costs": -0.20137841039086168
+          },
+          "real_fills_with_fee": {
+            "trades": 2243,
+            "win_rate": 0.24654480606330806,
+            "total_return": -0.9568498297370746,
+            "win_rate_before_costs": 0.3321444493981275,
+            "total_return_before_costs": -0.20137841039086168
+          }
+        },
+        "repainting_pivots": {
+          "k": 5,
+          "repainted_history": {
+            "trades": 859,
+            "win_rate": 0.9685681024447031,
+            "total_return": 102346662.33478816,
+            "win_rate_before_costs": 0.9685681024447031,
+            "total_return_before_costs": 102346662.33478816
+          },
+          "live_no_fee": {
+            "trades": 859,
+            "win_rate": 0.4307334109429569,
+            "total_return": -0.34068221953632316,
+            "win_rate_before_costs": 0.4307334109429569,
+            "total_return_before_costs": -0.34068221953632316
+          },
+          "live_with_fee": {
+            "trades": 859,
+            "win_rate": 0.35273573923166474,
+            "total_return": -0.7844645654950239,
+            "win_rate_before_costs": 0.4307334109429569,
+            "total_return_before_costs": -0.34068221953632316
+          }
+        }
+      },
+      "provenance": {
+        "script": "quant_lab/episodes/ep01/fake_backtest_tricks.py",
+        "params": {
+          "symbol": "BTCUSDT",
+          "interval": "1h",
+          "range": [
+            "2025-11-01",
+            "2026-10-31"
+          ],
+          "pivot_k": 5,
+          "costs": {
+            "taker_fee": 0.0005,
+            "maker_fee": 0.0002,
+            "slippage_bps": 1.5
+          }
+        },
+        "seed": null,
+        "data_sources": [
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-11.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-12.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-01.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-02.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-03.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-04.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-05.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-06.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-07.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-08.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-09.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-10.zip"
+        ],
+        "generated_at": "2026-11-05T16:25:02+00:00",
+        "note": ""
+      }
+    }
+  }
+}
