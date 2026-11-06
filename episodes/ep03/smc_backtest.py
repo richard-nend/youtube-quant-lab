@@ -156,14 +156,22 @@ def run(b: pd.DataFrame, sigs) -> dict:
         s["avg_r_loss"] = float(t.loc[t.net_ret <= 0, "r_multiple"].mean()) if (t.net_ret <= 0).any() else None
         s["expectancy_r"] = float(t["r_multiple"].mean())
         s["signals"] = len(sigs)
+        eq_net = (1 + 0.10 * t["net_ret"]).cumprod()
+        eq_gross = (1 + 0.10 * t["gross_ret"]).cumprod()
+        step = max(len(t) // 200, 1)
+        s["equity_curve_sampled"] = {
+            "exit_time": [str(x) for x in t["exit_time"].iloc[::step]],
+            "net": eq_net.iloc[::step].round(5).tolist(),
+            "gross": eq_gross.iloc[::step].round(5).tolist(),
+        }
         m = t.set_index("entry_time")["net_ret"].resample("MS")
         s["monthly"] = {str(k.date()): {"trades": int(v.count()), "win_rate": float((v > 0).mean()) if v.count() else None}
                         for k, v in m}
     return s
 
 
-def main():
-    b = binance.klines("BTCUSDT", "15m", START, END, market="um")
+def build(b: pd.DataFrame):
+    """Causal FVGs, OBs and the cumulative filter steps for bars b."""
     l, h, o, c = b.low.to_numpy(), b.high.to_numpy(), b.open.to_numpy(), b.close.to_numpy()
     a = atr(b).to_numpy()
     delta = (2 * b.taker_buy_volume - b.volume).to_numpy()          # taker buy - taker sell, per bar
@@ -219,6 +227,25 @@ def main():
         ("C4_+killzone", killzone),
         ("C5_+cvd_absorption", absorption),
     ]
+    return fvgs, obs, steps
+
+
+def filtered_signals(b: pd.DataFrame) -> dict:
+    """name -> signals for B_causal_fvg_only and C1..C5 (cumulative filters)."""
+    l, h = b.low.to_numpy(), b.high.to_numpy()
+    fvgs, _, steps = build(b)
+    out = {"B_causal_fvg_only": [s for s in (fvg_signal(z, l, h) for z in fvgs) if s]}
+    pool = fvgs
+    for name, pred in steps:
+        pool = [z for z in pool if pred(z)]
+        out[name] = [s for s in (fvg_signal(z, l, h) for z in pool) if s]
+    return out
+
+
+def main():
+    b = binance.klines("BTCUSDT", "15m", START, END, market="um")
+    l, h = b.low.to_numpy(), b.high.to_numpy()
+    fvgs, obs, steps = build(b)
 
     results = {}
     results["A_naive_lib"] = run(b, naive_lib_signals(b))

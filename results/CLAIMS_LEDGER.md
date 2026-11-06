@@ -52,7 +52,8 @@ Results JSON: `src/data/results/epXX.json` (each entry has script, params, seed,
 | 15 investor personas | ❌ | 13 personas + 4 analysis agents (last README before Aug-2026 restructure) |
 | backtest 140% / live −18% / turnover 350% / MDD 11% | ❌ | no source anywhere — invented unless we run it |
 | "the LLM already knows which stocks rose" (pretraining contamination) | ✅ (strong) | gemini-3.8-flash, no data in prompt, 5 tickers × 16 dates: 12-month returns for windows ending ≤ 2024-06 recalled with **MAE 0.93pp, sign 100%** (NVDA 2022-07 actual +191.5% → model +191.5%); windows ending ≥ 2025-07: **MAE 25.3pp, sign 60%** (worse than always guessing "up"). `ep05/ai_hedge_fund_probe.py` |
-| persona agreement / signal cancellation / ai-hedge-fund backtest | ⏳ blocked | legacy commit 6c41ae8 (13 personas) runs on Vertex, but its data API (financialdatasets.ai) now returns 402 Payment Required for every ticker |
+| "Persona votes cancel out → ambiguous HOLD" (consensus paradox) | ❌ as stated | legacy 6c41ae8, 13 personas, **substitute free data** (Yahoo + point-in-time SEC XBRL/Form 4, no news), AAPL/GOOGL/MSFT/NVDA/TSLA, 8 monthly decisions Mar–Oct 2025, 529 Vertex calls: PM chose HOLD in **65%** of cells, but near-zero cancellation only **5%**; personas leaned **bearish** (avg 5.7 bear / 2.0 bull / 5.3 neutral; Graham 100% bearish). Pairwise agreement 42%, mean signal corr 0.40 |
+| ai-hedge-fund backtest (claimed 140% / −18% / turnover 350%) | ❌ | agents **−1.3%** (MDD −9.6%, Sharpe −0.09) vs equal-weight buy & hold **+50.6%**, SPY +16.8%; avg net exposure **−35%** (short AAPL/MSFT/TSLA in a strong up-market); 14 trades, turnover 1.15× equity. 8 decisions = no statistical power; Mar–Oct 2025 may be partly memorized |
 | FinRobot 10-K RAG + code DCF | ✅ | DCF is fixed Python code, not LLM-written |
 | "extracts cost of capital from the 10-K" | ❌ | 10-K has cash flows, not WACC — WACC is an analyst assumption. Our AAPL DCF (3y avg FCF $114.5B): EV $2.01T at 9%; **±1pp WACC moves EV +18% / −13%** (`ep05/edgar_forensics.py`) |
 | Caught DSO spike + inventory 2x revenue "in 10 seconds" | 🔶 (own screen) | free SEC XBRL screen of top-100 filers: 55 screenable, **3.6 s** compute; DSO flags 9, inventory flags 15, **both: 1 (DELL FY2026: DSO 39→57d, revenue +18.8%, inventory +55.4%)** — a red flag is a question, not proof of fraud (AI-server build-out) |
@@ -74,3 +75,20 @@ Results JSON: `src/data/results/epXX.json` (each entry has script, params, seed,
 | Heikin-Ashi fills inflate backtests to "thousands of %" | ✅ | same HA colour-flip strategy: **HA-price fills +25,178%** vs real next-open fills **−20.1%** (−95.7% with fees), 2,243 trades |
 | Repainting arrows look like a "god indicator" (95% win) | ✅ | pivot arrows on history: **96.9% win** (859 trades) vs acting when confirmed: **43.1%** (−34.1%), with fees **35.3% / −78.4%** |
 | Fees turn it into a loss | ✅ | see above |
+
+## Answer experiments (round 2, pre-registered: `quant_lab/PREREGISTRATION.md`, commit 197476e)
+
+Verdict = PASS (net expectancy/trade > 0 on BTC-H, BTC-D, ETH-H, ≥100 trades each) · WEAK (BTC-H only) · FAIL.
+Expectancy = mean net return per trade at fixed notional (Amendment 1); R-expectancy also in JSON.
+
+| Hypothesis | Verdict | Measured | Script |
+|---|---|---|---|
+| EP03: skip FVG unless stop ≥ 10× round-trip cost (0.85%) | ❌ FAIL (all TFs) | 15m: BTC-D +0.169%/trade (110) but BTC-H −0.023% (99) · 1h: BTC-H −0.089% · 4h: <100 trades | `ep03/cost_aware_smc.py` |
+| (same run) FVG 1h, no rule | PASS on paper | BTC-D +0.201% (CI +0.05…+0.36) · BTC-H **+0.008%** (CI −0.13…+0.15) · ETH-H +0.106% · R-expectancy on BTC-H −0.09R → not distinguishable from 0 | same |
+| EP06 (a): aggression filter improves 1h Donchian breakout | ✅ | BTC-H −0.193% → **−0.127%** per trade | `ep06/flow_confirmed_breakout.py` |
+| EP06 (b): filtered breakout has an edge | ❌ FAIL | BTC-H −0.127% (CI −0.37…+0.13), BTC-D +0.185%, ETH-H +0.006% | same |
+| EP01: report card (6 checks) on 10 series strategies | — | every strategy ≥1 flag; most common: cost/risk (13–44% of 1R); delay test collapses both EP01 tricks and both 1h breakouts; holdout sign flips for EP03 5-filter, EP03 cost rule, both EP06 breakouts | `protocol/report_card.py` |
+| EP02 (a) veto worst-case > rule worst-case | ✅ | 23 events, 20x: worst event **−17.3%** (veto, 5 runs/event) vs **−100%** (RSI rule, 1 liquidation) | `ep02/llm_crash_replay.py --answer` |
+| EP02 (b) veto mean ≥ rule mean | ✅ | −0.74% vs −3.22% per event (both negative: no arm makes crash-buying profitable) | same |
+| EP02 (c) veto worst-case > rule + fixed 1.5% stop | ✅ | −17.3% vs −39.8% (fixed stop mean −3.71%: stop alone did not help the mean) | same |
+| (exploratory, NOT pre-registered) random veto at the LLM's rate 75% (430/573) | — | 460 runs: mean −1.30%, worst event −50.1%, worst run −74.3%, 5th pct −18.4% vs LLM veto −11.6% → ~3/4 of the mean gain is just trading less; the tail protection is not. Confound: approved LLM entries also carry an LLM-chosen stop. LLM veto median latency 10.4 s | same, arm `rule_randveto` |

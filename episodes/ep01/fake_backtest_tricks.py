@@ -36,12 +36,13 @@ def heikin_ashi(b: pd.DataFrame) -> pd.DataFrame:
 
 def trades_from_positions(pos: np.ndarray, entry_px: np.ndarray) -> pd.DataFrame:
     """pos[i] = position held after bar i's decision; fills at entry_px[i] whenever pos changes."""
-    rows, cur, px0 = [], 0, None
+    rows, cur, px0, i0 = [], 0, None, None
     for i in range(len(pos)):
         if pos[i] != cur:
             if cur != 0:
-                rows.append({"side": cur, "entry": px0, "exit": entry_px[i]})
-            cur, px0 = pos[i], entry_px[i]
+                # entry_i / exit_i are bookkeeping for the chart samples only (stats ignore them)
+                rows.append({"side": cur, "entry": px0, "exit": entry_px[i], "entry_i": i0, "exit_i": i})
+            cur, px0, i0 = pos[i], entry_px[i], i
     t = pd.DataFrame(rows)
     t["gross_ret"] = t.side * (t.exit - t.entry) / t.entry
     return t
@@ -52,6 +53,33 @@ def stats(t: pd.DataFrame, cost: float) -> dict:
     return {"trades": int(len(t)), "win_rate": float((net > 0).mean()),
             "total_return": float((1 + net).prod() - 1), "win_rate_before_costs": float((t.gross_ret > 0).mean()),
             "total_return_before_costs": float((1 + t.gross_ret).prod() - 1)}
+
+
+CURVE_STEP = 24  # chart samples: one equity point per 24 1h bars (daily)
+WINDOW = 40      # bars in the zoomed chart windows
+
+
+def equity_curve(t: pd.DataFrame, cost: float, n: int) -> list[float]:
+    """Equity (start 1.0) after every CURVE_STEP bars: compounded net trade returns realised by then.
+    The last point is the final equity, so curve[-1] - 1 == stats(t, cost)['total_return']."""
+    net = (t.gross_ret - cost).to_numpy()
+    exit_i = t.exit_i.to_numpy()
+    eq = np.ones(n)
+    acc, j = 1.0, 0
+    for i in range(n):
+        while j < len(net) and exit_i[j] <= i:
+            acc *= 1 + net[j]
+            j += 1
+        eq[i] = acc
+    idx = list(range(0, n, CURVE_STEP))
+    if idx[-1] != n - 1:
+        idx.append(n - 1)
+    return [float(eq[i]) for i in idx]
+
+
+def ohlc_rows(b: pd.DataFrame, s: int, e: int) -> list[dict]:
+    return [{"t": ts.isoformat(), "o": float(r.open), "h": float(r.high), "l": float(r.low), "c": float(r.close)}
+            for ts, r in b.iloc[s:e].iterrows()]
 
 
 def main():
@@ -99,7 +127,69 @@ def main():
     out["repainting_pivots"] = {"k": K, "repainted_history": stats(repaint, 0.0),
                                 "live_no_fee": stats(live, 0.0), "live_with_fee": stats(live, rt)}
 
+    # ---- chart samples for the video (no effect on the numbers above) -----------------
+    for name, t, c, ref in [("ha_fake", fake, 0.0, out["heikin_ashi"]["fake_fills_no_fee"]),
+                            ("ha_real", real, 0.0, out["heikin_ashi"]["real_fills_no_fee"]),
+                            ("ha_real_fee", real, rt, out["heikin_ashi"]["real_fills_with_fee"]),
+                            ("rp_live", live, 0.0, out["repainting_pivots"]["live_no_fee"]),
+                            ("rp_live_fee", live, rt, out["repainting_pivots"]["live_with_fee"])]:
+        curve = equity_curve(t, c, n)
+        assert abs((curve[-1] - 1) - ref["total_return"]) < 1e-9 * max(1.0, abs(ref["total_return"])), name
+        out.setdefault("charts", {"curve_step_bars": CURVE_STEP, "curves": {}})["curves"][name] = curve
+    out["charts"]["curve_start"] = b.index[0].isoformat()
+    out["charts"]["buy_and_hold_curve"] = [float(b.close.iloc[i] / b.open.iloc[0])
+                                           for i in list(range(0, n, CURVE_STEP)) + ([n - 1] if (n - 1) % CURVE_STEP else [])]
+    # HA window: WINDOW-bar block (non-overlapping) where HA-price fills beat real next-open fills the most
+    hc_ = ha.close.to_numpy()
+    fake_ret_bar = np.zeros(n)
+    real_ret_bar = np.zeros(n)
+    for t, arr in [(fake, fake_ret_bar), (real, real_ret_bar)]:
+        for _, r in t.iterrows():
+            arr[int(r.exit_i)] += r.gross_ret
+    best_s, best_gap = 0, -1e9
+    for s in range(0, n - WINDOW, WINDOW):
+        gap = fake_ret_bar[s:s + WINDOW].sum() - real_ret_bar[s:s + WINDOW].sum()
+        if gap > best_gap:
+            best_s, best_gap = s, gap
+    s, e = best_s, best_s + WINDOW
+    out["charts"]["ha_window"] = {
+        "start_index": s,
+        "real": ohlc_rows(b, s, e),
+        "ha": [{"o": float(ha.open.iloc[i]), "c": float(hc_[i])} for i in range(s, e)],
+        # flips inside the window: signal bar i, synthetic fill = HA close of bar i, real fill = open of bar i+1
+        "flips": [{"i": int(i - s), "side": int(sig[i]), "fake_px": float(hc_[i]), "real_px": float(b.open.iloc[i + 1])}
+                  for i in range(max(s, 1), e - 1) if sig[i] != sig[i - 1]],
+        "gross_gap_sum": float(best_gap),
+    }
+    # Repaint window: block where the repainted-history trades beat the live trades the most
+    rp_bar = np.zeros(n)
+    lv_bar = np.zeros(n)
+    for t, arr in [(repaint, rp_bar), (live, lv_bar)]:
+        for _, r in t.iterrows():
+            arr[int(r.exit_i)] += r.gross_ret
+    best_s, best_gap = 0, -1e9
+    for s in range(K + 1, n - WINDOW - K - 1, WINDOW):
+        lows = int((piv[s:s + WINDOW - K - 1] == 1).sum())
+        if lows < 2:
+            continue
+        gap = rp_bar[s:s + WINDOW].sum() - lv_bar[s:s + WINDOW].sum()
+        if gap > best_gap:
+            best_s, best_gap = s, gap
+    s, e = best_s, best_s + WINDOW
+    out["charts"]["repaint_window"] = {
+        "start_index": s,
+        "k": K,
+        "real": ohlc_rows(b, s, e),
+        # pivots fully confirmable inside the window: drawn at bar i (price = low/high), live entry at open of i+K+1
+        "pivots": [{"i": int(p - s), "type": int(piv[p]), "drawn_px": float(l[p] if piv[p] == 1 else h[p]),
+                    "live_i": int(p + K + 1 - s), "live_px": float(b.open.iloc[p + K + 1])}
+                   for p in range(s, e - K - 1) if piv[p]],
+        "gross_gap_sum": float(best_gap),
+    }
+
     for sec, d in out.items():
+        if sec == "charts":
+            continue
         if isinstance(d, dict):
             for k, s in d.items():
                 if isinstance(s, dict):

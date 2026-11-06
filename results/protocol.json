@@ -1,0 +1,470 @@
+{
+  "episode": "protocol",
+  "experiments": {
+    "report_card": {
+      "values": {
+        "cards": [
+          {
+            "name": "EP01 Heikin-Ashi colour flip",
+            "base": {
+              "trades": 2244,
+              "expectancy": 0.002505146518371348,
+              "win_rate": 0.482174688057041
+            },
+            "delay_1bar": {
+              "trades": 2243,
+              "expectancy": -0.0013616596382897107,
+              "expectancy_before_costs": -6.165963828971076e-05,
+              "win_rate": 0.24654480606330806,
+              "ci95": [
+                -0.0017194923915107882,
+                -0.0010023187190795703
+              ]
+            },
+            "cost_to_risk_median": 0.4379867424242484,
+            "expectancy_2x_costs": -0.0026616596382897104,
+            "holdout": {
+              "trades": 2190,
+              "expectancy_as_shown": 0.00281885390599689
+            },
+            "flags": [
+              "delay: edge collapses when acting one bar later",
+              "cost/risk: costs are 44% of a typical trade move"
+            ]
+          },
+          {
+            "name": "EP01 repainting pivot arrows",
+            "base": {
+              "trades": 859,
+              "expectancy": 0.021861224517527186,
+              "win_rate": 0.9685681024447031
+            },
+            "delay_1bar": {
+              "trades": 859,
+              "expectancy": -0.0016850502896709274,
+              "expectancy_before_costs": -0.00038505028967092744,
+              "win_rate": 0.35273573923166474,
+              "ci95": [
+                -0.0026309529222109944,
+                -0.0007357846671637073
+              ]
+            },
+            "cost_to_risk_median": 0.27723286898839133,
+            "expectancy_2x_costs": -0.002985050289670928,
+            "holdout": {
+              "trades": 869,
+              "expectancy_as_shown": 0.023499624796731736
+            },
+            "flags": [
+              "delay: edge collapses when acting one bar later",
+              "cost/risk: costs are 28% of a typical trade move"
+            ]
+          },
+          {
+            "name": "EP03 FVG mechanical (15m)",
+            "base": {
+              "trades": 1935,
+              "win_rate": 0.30129198966408266,
+              "expectancy": -3.8534564143628155e-05,
+              "expectancy_before_costs": 0.0006828607846935811,
+              "expectancy_r": -0.3537132577538702,
+              "ci95": [
+                -0.00035210733419041465,
+                0.00027937809469861434
+              ],
+              "sum_net": -0.07456438161792048
+            },
+            "flags": [
+              "cost/risk: costs are 31% of 1R",
+              "sample: 1935 trades, 95% CI [-0.035%, +0.028%] includes 0"
+            ],
+            "delay_1bar": {
+              "sum_net": -0.4636177064408019,
+              "expectancy": -0.00024021642820766937
+            },
+            "cost_to_risk_median": 0.3071759615384723,
+            "expectancy_2x_costs": -0.0007599299129808375,
+            "holdout": {
+              "trades": 2060,
+              "win_rate": 0.31650485436893205,
+              "expectancy": -0.00013470123172767813,
+              "expectancy_before_costs": 0.0005781143022529044,
+              "expectancy_r": -0.2505713713054911,
+              "ci95": [
+                -0.0004166968288258586,
+                0.00015998089166620896
+              ],
+              "sum_net": -0.27748453735901696
+            }
+          },
+          {
+            "name": "EP03 FVG + 5 filters (15m)",
+            "base": {
+              "trades": 10,
+              "win_rate": 0.3,
+              "expectancy": 0.0017080369131521535,
+              "expectancy_before_costs": 0.0024230369131521537,
+              "expectancy_r": -0.01356210775487523,
+              "ci95": [
+                -0.003953812963061447,
+                0.007983528495896964
+              ],
+              "sum_net": 0.017080369131521535
+            },
+            "flags": [
+              "cost/risk: costs are 21% of 1R",
+              "sample: 10 trades, 95% CI [-0.395%, +0.798%] includes 0",
+              "holdout: sign of expectancy flips",
+              "concentration: 5 best trades = 239% of profit"
+            ],
+            "delay_1bar": {
+              "sum_net": 0.017080369131521535,
+              "expectancy": 0.0017080369131521535
+            },
+            "cost_to_risk_median": 0.21160658690731401,
+            "expectancy_2x_costs": 0.0009930369131521542,
+            "holdout": {
+              "trades": 16,
+              "win_rate": 0.1875,
+              "expectancy": -0.001062612064125397,
+              "expectancy_before_costs": -0.00024073706412539725,
+              "expectancy_r": -0.4978521343565597,
+              "ci95": [
+                -0.0057700228272723995,
+                0.005294689422346064
+              ],
+              "sum_net": -0.01700179302600635
+            },
+            "top5_share": 2.394360892817447
+          },
+          {
+            "name": "EP03 FVG + cost/risk rule (15m)",
+            "base": {
+              "trades": 110,
+              "win_rate": 0.39090909090909093,
+              "expectancy": 0.0016882672407232005,
+              "expectancy_before_costs": 0.0024523581498141094,
+              "expectancy_r": 0.14530211029551784,
+              "ci95": [
+                -0.001672235263869622,
+                0.005125555293393681
+              ],
+              "sum_net": 0.18570939647955206
+            },
+            "flags": [
+              "sample: 110 trades, 95% CI [-0.167%, +0.513%] includes 0",
+              "holdout: sign of expectancy flips",
+              "concentration: 5 best trades = 116% of profit"
+            ],
+            "delay_1bar": {
+              "sum_net": 0.22007045268236927,
+              "expectancy": 0.0020376893766886044
+            },
+            "cost_to_risk_median": 0.0727406297541775,
+            "expectancy_2x_costs": 0.0009241763316322909,
+            "holdout": {
+              "trades": 99,
+              "win_rate": 0.35353535353535354,
+              "expectancy": -0.00022886908169715138,
+              "expectancy_before_costs": 0.0005347672819392118,
+              "expectancy_r": 0.05466708167164623,
+              "ci95": [
+                -0.003756615621989574,
+                0.0034260579443017524
+              ],
+              "sum_net": -0.022658039088017987
+            },
+            "top5_share": 1.161380439517579
+          },
+          {
+            "name": "EP03 FVG mechanical (1h)",
+            "base": {
+              "trades": 429,
+              "win_rate": 0.36363636363636365,
+              "expectancy": 0.0020109077036599273,
+              "expectancy_before_costs": 0.002709858752610976,
+              "expectancy_r": 0.21399779145160608,
+              "ci95": [
+                0.0005066077453422444,
+                0.0035489100876013244
+              ],
+              "sum_net": 0.8626794048701087
+            },
+            "flags": [
+              "cost/risk: costs are 13% of 1R"
+            ],
+            "delay_1bar": {
+              "sum_net": 0.5672679924338382,
+              "expectancy": 0.0013010733771418306
+            },
+            "cost_to_risk_median": 0.12649425651867383,
+            "expectancy_2x_costs": 0.0013119566547088778,
+            "holdout": {
+              "trades": 463,
+              "win_rate": 0.2915766738660907,
+              "expectancy": 7.644045133097865e-05,
+              "expectancy_before_costs": 0.000803006326061,
+              "expectancy_r": -0.09238993159298291,
+              "ci95": [
+                -0.0012778676626867078,
+                0.0014958292980646404
+              ],
+              "sum_net": 0.035391928966243116
+            },
+            "top5_share": 0.44984578175000534
+          },
+          {
+            "name": "EP06 absorption fade, market orders (5m)",
+            "base": {
+              "trades": 211,
+              "win_rate": 0.5545023696682464,
+              "expectancy": -0.0010302324714621313,
+              "expectancy_before_costs": -2.8810670514264056e-05,
+              "expectancy_r": -0.41780131069623827,
+              "ci95": [
+                -0.001454610769439417,
+                -0.0006086324550514716
+              ],
+              "sum_net": -0.21737905147850972
+            },
+            "flags": [
+              "cost/risk: costs are 31% of 1R"
+            ],
+            "delay_1bar": {
+              "sum_net": -0.22857229328983042,
+              "expectancy": -0.001073109358168218
+            },
+            "cost_to_risk_median": 0.3071363174315276,
+            "expectancy_2x_costs": -0.0020316542724099986,
+            "holdout": {
+              "trades": 162,
+              "win_rate": 0.6111111111111112,
+              "expectancy": -0.0008016046793718922,
+              "expectancy_before_costs": 0.0001845064317392188,
+              "expectancy_r": -0.33917242608333303,
+              "ci95": [
+                -0.0012887325793123471,
+                -0.0003048968169621531
+              ],
+              "sum_net": -0.12985995805824654
+            }
+          },
+          {
+            "name": "EP06 failure entry + 5x cost rule (5m)",
+            "base": {
+              "trades": 80,
+              "win_rate": 0.375,
+              "expectancy": -0.001080887363044122,
+              "expectancy_before_costs": 0.00011223763695587799,
+              "expectancy_r": -0.1644466458235459,
+              "ci95": [
+                -0.0026524655800106095,
+                0.00047131427434571083
+              ],
+              "sum_net": -0.08647098904352976
+            },
+            "flags": [
+              "cost/risk: costs are 22% of 1R",
+              "sample: 80 trades, 95% CI [-0.265%, +0.047%] includes 0"
+            ],
+            "delay_1bar": {
+              "sum_net": -0.11777723801364076,
+              "expectancy": -0.0014722154751705095
+            },
+            "cost_to_risk_median": 0.21761136065955894,
+            "expectancy_2x_costs": -0.0022740123630441223,
+            "holdout": {
+              "trades": 79,
+              "win_rate": 0.379746835443038,
+              "expectancy": -0.001043308973810718,
+              "expectancy_before_costs": 0.00014276697555637083,
+              "expectancy_r": -0.1559400683303896,
+              "ci95": [
+                -0.0026517125187891094,
+                0.0005926194942039776
+              ],
+              "sum_net": -0.08242140893104671
+            }
+          },
+          {
+            "name": "EP06 1h breakout, no order flow",
+            "base": {
+              "trades": 270,
+              "win_rate": 0.3814814814814815,
+              "expectancy": 0.0009417161332081946,
+              "expectancy_before_costs": 0.002101716133208194,
+              "expectancy_r": -0.02758765656662016,
+              "ci95": [
+                -0.0013333904682008857,
+                0.00326185612361538
+              ],
+              "sum_net": 0.2542633559662125
+            },
+            "flags": [
+              "delay: edge collapses when acting one bar later",
+              "sample: 270 trades, 95% CI [-0.133%, +0.326%] includes 0",
+              "holdout: sign of expectancy flips",
+              "concentration: 5 best trades = 95% of profit"
+            ],
+            "delay_1bar": {
+              "sum_net": 0.024823307698674794,
+              "expectancy": 7.757283655835873e-05
+            },
+            "cost_to_risk_median": 0.09829977776810367,
+            "expectancy_2x_costs": -0.000218283866791806,
+            "holdout": {
+              "trades": 300,
+              "win_rate": 0.3566666666666667,
+              "expectancy": -0.0019343940527279872,
+              "expectancy_before_costs": -0.0007678940527279874,
+              "expectancy_r": -0.09382886183655259,
+              "ci95": [
+                -0.0040996196828241484,
+                0.0001920700668351439
+              ],
+              "sum_net": -0.5803182158183962
+            },
+            "top5_share": 0.9523156527137183
+          },
+          {
+            "name": "EP06 1h breakout + aggression filter",
+            "base": {
+              "trades": 227,
+              "win_rate": 0.43612334801762115,
+              "expectancy": 0.0018471720316003745,
+              "expectancy_before_costs": 0.002996511238648832,
+              "expectancy_r": 0.0806840946529612,
+              "ci95": [
+                -0.0006948940315068203,
+                0.004442621823034066
+              ],
+              "sum_net": 0.419308051173285
+            },
+            "flags": [
+              "delay: edge collapses when acting one bar later",
+              "sample: 227 trades, 95% CI [-0.069%, +0.444%] includes 0",
+              "holdout: sign of expectancy flips",
+              "concentration: 5 best trades = 58% of profit"
+            ],
+            "delay_1bar": {
+              "sum_net": 0.08331434833017914,
+              "expectancy": 0.0003143937672836949
+            },
+            "cost_to_risk_median": 0.09150326130472083,
+            "expectancy_2x_costs": 0.0006978328245519159,
+            "holdout": {
+              "trades": 227,
+              "win_rate": 0.3744493392070485,
+              "expectancy": -0.0012665669675869181,
+              "expectancy_before_costs": -0.00011326300282920907,
+              "expectancy_r": -0.015927466159109317,
+              "ci95": [
+                -0.0037334673185249233,
+                0.001301016835521345
+              ],
+              "sum_net": -0.2875107016422304
+            },
+            "top5_share": 0.577472750930024
+          }
+        ]
+      },
+      "provenance": {
+        "script": "quant_lab/episodes/protocol/report_card.py",
+        "params": {
+          "discovery": [
+            "2025-11-01",
+            "2026-10-31"
+          ],
+          "holdout": [
+            "2024-11-01",
+            "2025-10-31"
+          ],
+          "costs": {
+            "taker_fee": 0.0005,
+            "maker_fee": 0.0002,
+            "slippage_bps": 1.5
+          },
+          "preregistration": "PREREGISTRATION.md H-EP01 (commit 197476e)"
+        },
+        "seed": null,
+        "data_sources": [
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-11.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-12.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-01.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-02.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-03.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-04.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-05.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-06.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-07.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-08.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-09.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-10.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2024-11.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2024-12.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-01.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-02.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-03.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-04.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-05.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-06.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-07.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-08.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-09.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-10.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2025-11.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2025-12.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2026-01.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2026-02.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2026-03.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2026-04.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2026-05.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2026-06.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2026-07.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2026-08.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2026-09.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2026-10.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2024-11.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2024-12.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2025-01.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2025-02.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2025-03.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2025-04.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2025-05.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2025-06.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2025-07.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2025-08.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2025-09.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2025-10.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2025-11.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2025-12.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2026-01.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2026-02.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2026-03.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2026-04.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2026-05.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2026-06.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2026-07.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2026-08.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2026-09.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2026-10.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2024-11.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2024-12.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2025-01.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2025-02.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2025-03.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2025-04.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2025-05.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2025-06.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2025-07.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2025-08.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2025-09.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2025-10.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2024-10.zip"
+        ],
+        "generated_at": "2026-11-06T05:06:16+00:00",
+        "note": ""
+      }
+    }
+  }
+}

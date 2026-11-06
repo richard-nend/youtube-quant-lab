@@ -33,6 +33,7 @@ def ruin_rate(p: float, multiplier: float, *, n_traders: int = 1000, n_trades: i
     bet = np.full(n_traders, base_bet, dtype=float)
     alive = np.ones(n_traders, dtype=bool)
     ruined_at = np.full(n_traders, -1)
+    balance_at_ruin = np.full(n_traders, np.nan)
     peak = bal.copy()
     paths = np.empty((n_trades + 1, return_paths)) if return_paths else None
     if return_paths:
@@ -49,9 +50,12 @@ def ruin_rate(p: float, multiplier: float, *, n_traders: int = 1000, n_trades: i
         peak = np.maximum(peak, bal)
         newly = a & (bal < bet)
         ruined_at[newly] = t + 1
+        balance_at_ruin[newly] = bal[newly]
         alive = a & ~newly
         if return_paths:
-            paths[t + 1] = np.where(alive[:return_paths], bal[:return_paths], 0.0)
+            # after ruin the path is frozen at the balance left when the next bet became unaffordable
+            paths[t + 1] = np.where(alive[:return_paths], bal[:return_paths],
+                                    np.nan_to_num(balance_at_ruin[:return_paths]))
 
     ruined = ~alive
     out = {
@@ -61,6 +65,8 @@ def ruin_rate(p: float, multiplier: float, *, n_traders: int = 1000, n_trades: i
         "median_trade_of_ruin": float(np.median(ruined_at[ruined])) if ruined.any() else None,
         "survivor_median_balance": float(np.median(bal[alive])) if alive.any() else None,
         "survivor_median_peak": float(np.median(peak[alive])) if alive.any() else None,
+        "median_balance_left_at_ruin": float(np.nanmedian(balance_at_ruin)) if ruined.any() else None,
+        "ruined_mask_first_paths": ruined[:return_paths].tolist() if return_paths else None,
     }
     return (out, paths) if return_paths else out
 
@@ -80,9 +86,12 @@ def main():
                                  "cost_per_bet": fee, "ruin_rate": r["ruin_rate"],
                                  "median_trade_of_ruin": r["median_trade_of_ruin"]})
 
-    # --- 5 sample equity paths for the on-screen chart (2.0x, 60%) ---------------------
-    _, paths = ruin_rate(0.60, 2.0, return_paths=12)
+    # --- on-screen sample: the first 50 traders of the headline run (2.0x, 60%) --------
+    # Not cherry-picked: same seed as the headline, traders 0..49. Their ruin share is
+    # reported next to the paths so the chart can show it honestly.
+    sample_stats, paths = ruin_rate(0.60, 2.0, return_paths=50)
     sample_paths = paths[::5].T.round(2).tolist()   # every 5th trade to keep JSON small
+    sample_ruined = sample_stats["ruined_mask_first_paths"]
 
     for k, v in headline.items():
         print(f"headline {k}: ruin {v['ruin_rate']:.1%} ({v['ruined']}/1000), "
@@ -93,7 +102,9 @@ def main():
 
     path = write_result(
         "ep04", "martingale_montecarlo",
-        {"headline": headline, "grid": grid, "sample_paths_every5": sample_paths},
+        {"headline": headline, "grid": grid, "sample_paths_every5": sample_paths,
+         "sample_paths_ruined": sample_ruined,
+         "sample_ruin_share": float(np.mean(sample_ruined))},
         params={"win_rate": 0.60, "n_traders": 1000, "n_trades": 500, "bankroll": 10_000,
                 "base_bet": 100, "payoff": "even money", "ruin": "next bet > balance"},
         seed=SEED, sources=[],

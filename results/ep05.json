@@ -1548,6 +1548,988 @@
         "generated_at": "2026-11-05T16:41:24+00:00",
         "note": "Contamination probe only; persona pipeline (a)-(c) not run because no free data path exists."
       }
+    },
+    "persona_vote_experiment": {
+      "values": {
+        "data_substituted": true,
+        "substitution_doc": "quant_lab/vendor/ai-hedge-fund-legacy/DATA_SUBSTITUTIONS.md",
+        "llm_calls": 529,
+        "llm_errors": 0,
+        "llm_fallbacks_to_default": 0,
+        "fallbacks": [],
+        "a_persona_agreement": {
+          "n_pairs": 78,
+          "mean_same_signal": 0.4208333333333333,
+          "mean_opposite_signal": 0.09198717948717951,
+          "mean_corr": 0.4043830757295844,
+          "median_corr": 0.46087192220514134,
+          "share_pairs_corr_negative": 0.0641025641025641,
+          "most_agreeing": [
+            {
+              "a": "mohnish_pabrai",
+              "b": "peter_lynch",
+              "same_signal": 0.025,
+              "opposite_signal": 0.05,
+              "corr": 0.8651250380817529
+            },
+            {
+              "a": "ben_graham",
+              "b": "aswath_damodaran",
+              "same_signal": 0.55,
+              "opposite_signal": 0.175,
+              "corr": 0.8545103693836625
+            },
+            {
+              "a": "rakesh_jhunjhunwala",
+              "b": "aswath_damodaran",
+              "same_signal": 0.55,
+              "opposite_signal": 0.025,
+              "corr": 0.8242947246394128
+            }
+          ],
+          "most_opposed": [
+            {
+              "a": "charlie_munger",
+              "b": "cathie_wood",
+              "same_signal": 0.4,
+              "opposite_signal": 0.35,
+              "corr": -0.4478846864088318
+            },
+            {
+              "a": "charlie_munger",
+              "b": "peter_lynch",
+              "same_signal": 0.4,
+              "opposite_signal": 0.2,
+              "corr": -0.44639431480381037
+            },
+            {
+              "a": "charlie_munger",
+              "b": "mohnish_pabrai",
+              "same_signal": 0.425,
+              "opposite_signal": 0.0,
+              "corr": -0.3167842432078283
+            }
+          ],
+          "pairs": [
+            {
+              "a": "warren_buffett",
+              "b": "charlie_munger",
+              "same_signal": 0.8,
+              "opposite_signal": 0.0,
+              "corr": 0.2163599271817315
+            },
+            {
+              "a": "warren_buffett",
+              "b": "ben_graham",
+              "same_signal": 0.3,
+              "opposite_signal": 0.0,
+              "corr": 0.5337674060895473
+            },
+            {
+              "a": "warren_buffett",
+              "b": "bill_ackman",
+              "same_signal": 0.875,
+              "opposite_signal": 0.0,
+              "corr": 0.6692993670400251
+            },
+            {
+              "a": "warren_buffett",
+              "b": "cathie_wood",
+              "same_signal": 0.35,
+              "opposite_signal": 0.2,
+              "corr": 0.029118312661733266
+            },
+            {
+              "a": "warren_buffett",
+              "b": "michael_burry",
+              "same_signal": 0.45,
+              "opposite_signal": 0.0,
+              "corr": 0.12827568763456418
+            },
+            {
+              "a": "warren_buffett",
+              "b": "mohnish_pabrai",
+              "same_signal": 0.525,
+              "opposite_signal": 0.0,
+              "corr": 0.1791996655473107
+            },
+            {
+              "a": "warren_buffett",
+              "b": "nassim_taleb",
+              "same_signal": 0.25,
+              "opposite_signal": 0.0,
+              "corr": 0.10895412935223386
+            },
+            {
+              "a": "warren_buffett",
+              "b": "peter_lynch",
+              "same_signal": 0.35,
+              "opposite_signal": 0.05,
+              "corr": 0.3260784466935338
+            },
+            {
+              "a": "warren_buffett",
+              "b": "phil_fisher",
+              "same_signal": 0.375,
+              "opposite_signal": 0.0,
+              "corr": 0.5037686460747124
+            },
+            {
+              "a": "warren_buffett",
+              "b": "rakesh_jhunjhunwala",
+              "same_signal": 0.45,
+              "opposite_signal": 0.0,
+              "corr": 0.39186592525241654
+            },
+            {
+              "a": "warren_buffett",
+              "b": "stanley_druckenmiller",
+              "same_signal": 0.375,
+              "opposite_signal": 0.025,
+              "corr": 0.30461136384667903
+            },
+            {
+              "a": "warren_buffett",
+              "b": "aswath_damodaran",
+              "same_signal": 0.575,
+              "opposite_signal": 0.0,
+              "corr": 0.560637094466817
+            },
+            {
+              "a": "charlie_munger",
+              "b": "ben_graham",
+              "same_signal": 0.4,
+              "opposite_signal": 0.0,
+              "corr": 0.3206326958529393
+            },
+            {
+              "a": "charlie_munger",
+              "b": "bill_ackman",
+              "same_signal": 0.875,
+              "opposite_signal": 0.0,
+              "corr": 0.40520046403879445
+            },
+            {
+              "a": "charlie_munger",
+              "b": "cathie_wood",
+              "same_signal": 0.4,
+              "opposite_signal": 0.35,
+              "corr": -0.4478846864088318
+            },
+            {
+              "a": "charlie_munger",
+              "b": "michael_burry",
+              "same_signal": 0.55,
+              "opposite_signal": 0.0,
+              "corr": 0.2968896392704015
+            },
+            {
+              "a": "charlie_munger",
+              "b": "mohnish_pabrai",
+              "same_signal": 0.425,
+              "opposite_signal": 0.0,
+              "corr": -0.3167842432078283
+            },
+            {
+              "a": "charlie_munger",
+              "b": "nassim_taleb",
+              "same_signal": 0.35,
+              "opposite_signal": 0.0,
+              "corr": 0.3366602716531431
+            },
+            {
+              "a": "charlie_munger",
+              "b": "peter_lynch",
+              "same_signal": 0.4,
+              "opposite_signal": 0.2,
+              "corr": -0.44639431480381037
+            },
+            {
+              "a": "charlie_munger",
+              "b": "phil_fisher",
+              "same_signal": 0.35,
+              "opposite_signal": 0.075,
+              "corr": 0.1531207976416181
+            },
+            {
+              "a": "charlie_munger",
+              "b": "rakesh_jhunjhunwala",
+              "same_signal": 0.55,
+              "opposite_signal": 0.0,
+              "corr": 0.27907674503154606
+            },
+            {
+              "a": "charlie_munger",
+              "b": "stanley_druckenmiller",
+              "same_signal": 0.325,
+              "opposite_signal": 0.125,
+              "corr": -0.24498855962218857
+            },
+            {
+              "a": "charlie_munger",
+              "b": "aswath_damodaran",
+              "same_signal": 0.475,
+              "opposite_signal": 0.0,
+              "corr": 0.24907328600285944
+            },
+            {
+              "a": "ben_graham",
+              "b": "bill_ackman",
+              "same_signal": 0.275,
+              "opposite_signal": 0.0,
+              "corr": 0.4425436880958356
+            },
+            {
+              "a": "ben_graham",
+              "b": "cathie_wood",
+              "same_signal": 0.05,
+              "opposite_signal": 0.6,
+              "corr": 0.25664976022456487
+            },
+            {
+              "a": "ben_graham",
+              "b": "michael_burry",
+              "same_signal": 0.75,
+              "opposite_signal": 0.0,
+              "corr": 0.6011311167567135
+            },
+            {
+              "a": "ben_graham",
+              "b": "mohnish_pabrai",
+              "same_signal": 0.625,
+              "opposite_signal": 0.0,
+              "corr": 0.5595581483592829
+            },
+            {
+              "a": "ben_graham",
+              "b": "nassim_taleb",
+              "same_signal": 0.55,
+              "opposite_signal": 0.15,
+              "corr": 0.47920015631444707
+            },
+            {
+              "a": "ben_graham",
+              "b": "peter_lynch",
+              "same_signal": 0.0,
+              "opposite_signal": 0.4,
+              "corr": 0.5518336349897538
+            },
+            {
+              "a": "ben_graham",
+              "b": "phil_fisher",
+              "same_signal": 0.025,
+              "opposite_signal": 0.35,
+              "corr": 0.8052517138506181
+            },
+            {
+              "a": "ben_graham",
+              "b": "rakesh_jhunjhunwala",
+              "same_signal": 0.85,
+              "opposite_signal": 0.0,
+              "corr": 0.7811702051128476
+            },
+            {
+              "a": "ben_graham",
+              "b": "stanley_druckenmiller",
+              "same_signal": 0.3,
+              "opposite_signal": 0.3,
+              "corr": 0.5563917424196347
+            },
+            {
+              "a": "ben_graham",
+              "b": "aswath_damodaran",
+              "same_signal": 0.55,
+              "opposite_signal": 0.175,
+              "corr": 0.8545103693836625
+            },
+            {
+              "a": "bill_ackman",
+              "b": "cathie_wood",
+              "same_signal": 0.4,
+              "opposite_signal": 0.225,
+              "corr": -0.14588880790821113
+            },
+            {
+              "a": "bill_ackman",
+              "b": "michael_burry",
+              "same_signal": 0.425,
+              "opposite_signal": 0.0,
+              "corr": 0.0779691033835568
+            },
+            {
+              "a": "bill_ackman",
+              "b": "mohnish_pabrai",
+              "same_signal": 0.45,
+              "opposite_signal": 0.0,
+              "corr": 0.04420745965639864
+            },
+            {
+              "a": "bill_ackman",
+              "b": "nassim_taleb",
+              "same_signal": 0.225,
+              "opposite_signal": 0.0,
+              "corr": 0.06225458986922068
+            },
+            {
+              "a": "bill_ackman",
+              "b": "peter_lynch",
+              "same_signal": 0.4,
+              "opposite_signal": 0.075,
+              "corr": 0.20106569283864273
+            },
+            {
+              "a": "bill_ackman",
+              "b": "phil_fisher",
+              "same_signal": 0.45,
+              "opposite_signal": 0.05,
+              "corr": 0.3104509569401215
+            },
+            {
+              "a": "bill_ackman",
+              "b": "rakesh_jhunjhunwala",
+              "same_signal": 0.425,
+              "opposite_signal": 0.0,
+              "corr": 0.3838444682754998
+            },
+            {
+              "a": "bill_ackman",
+              "b": "stanley_druckenmiller",
+              "same_signal": 0.35,
+              "opposite_signal": 0.075,
+              "corr": 0.03314785161005881
+            },
+            {
+              "a": "bill_ackman",
+              "b": "aswath_damodaran",
+              "same_signal": 0.5,
+              "opposite_signal": 0.0,
+              "corr": 0.48563220146358854
+            },
+            {
+              "a": "cathie_wood",
+              "b": "michael_burry",
+              "same_signal": 0.025,
+              "opposite_signal": 0.375,
+              "corr": 0.21827562867201844
+            },
+            {
+              "a": "cathie_wood",
+              "b": "mohnish_pabrai",
+              "same_signal": 0.025,
+              "opposite_signal": 0.25,
+              "corr": 0.43529694227897836
+            },
+            {
+              "a": "cathie_wood",
+              "b": "nassim_taleb",
+              "same_signal": 0.175,
+              "opposite_signal": 0.275,
+              "corr": 0.15268004447775313
+            },
+            {
+              "a": "cathie_wood",
+              "b": "peter_lynch",
+              "same_signal": 0.75,
+              "opposite_signal": 0.0,
+              "corr": 0.6217872359983403
+            },
+            {
+              "a": "cathie_wood",
+              "b": "phil_fisher",
+              "same_signal": 0.6,
+              "opposite_signal": 0.025,
+              "corr": 0.30435970053375044
+            },
+            {
+              "a": "cathie_wood",
+              "b": "rakesh_jhunjhunwala",
+              "same_signal": 0.05,
+              "opposite_signal": 0.45,
+              "corr": 0.3059769836552235
+            },
+            {
+              "a": "cathie_wood",
+              "b": "stanley_druckenmiller",
+              "same_signal": 0.475,
+              "opposite_signal": 0.075,
+              "corr": 0.5386632050901297
+            },
+            {
+              "a": "cathie_wood",
+              "b": "aswath_damodaran",
+              "same_signal": 0.35,
+              "opposite_signal": 0.275,
+              "corr": 0.28691072862123046
+            },
+            {
+              "a": "michael_burry",
+              "b": "mohnish_pabrai",
+              "same_signal": 0.825,
+              "opposite_signal": 0.0,
+              "corr": 0.6181985324724719
+            },
+            {
+              "a": "michael_burry",
+              "b": "nassim_taleb",
+              "same_signal": 0.675,
+              "opposite_signal": 0.025,
+              "corr": 0.7073824892969341
+            },
+            {
+              "a": "michael_burry",
+              "b": "peter_lynch",
+              "same_signal": 0.05,
+              "opposite_signal": 0.2,
+              "corr": 0.4807743760775465
+            },
+            {
+              "a": "michael_burry",
+              "b": "phil_fisher",
+              "same_signal": 0.075,
+              "opposite_signal": 0.15,
+              "corr": 0.600803766890694
+            },
+            {
+              "a": "michael_burry",
+              "b": "rakesh_jhunjhunwala",
+              "same_signal": 0.9,
+              "opposite_signal": 0.0,
+              "corr": 0.7016655963402582
+            },
+            {
+              "a": "michael_burry",
+              "b": "stanley_druckenmiller",
+              "same_signal": 0.325,
+              "opposite_signal": 0.125,
+              "corr": 0.4347779382399621
+            },
+            {
+              "a": "michael_burry",
+              "b": "aswath_damodaran",
+              "same_signal": 0.525,
+              "opposite_signal": 0.0,
+              "corr": 0.6565998763125537
+            },
+            {
+              "a": "mohnish_pabrai",
+              "b": "nassim_taleb",
+              "same_signal": 0.5,
+              "opposite_signal": 0.025,
+              "corr": 0.38044976852417517
+            },
+            {
+              "a": "mohnish_pabrai",
+              "b": "peter_lynch",
+              "same_signal": 0.025,
+              "opposite_signal": 0.05,
+              "corr": 0.8651250380817529
+            },
+            {
+              "a": "mohnish_pabrai",
+              "b": "phil_fisher",
+              "same_signal": 0.125,
+              "opposite_signal": 0.075,
+              "corr": 0.6343112636102648
+            },
+            {
+              "a": "mohnish_pabrai",
+              "b": "rakesh_jhunjhunwala",
+              "same_signal": 0.775,
+              "opposite_signal": 0.0,
+              "corr": 0.5934493045184723
+            },
+            {
+              "a": "mohnish_pabrai",
+              "b": "stanley_druckenmiller",
+              "same_signal": 0.3,
+              "opposite_signal": 0.025,
+              "corr": 0.6105303750298922
+            },
+            {
+              "a": "mohnish_pabrai",
+              "b": "aswath_damodaran",
+              "same_signal": 0.55,
+              "opposite_signal": 0.0,
+              "corr": 0.5941091225604999
+            },
+            {
+              "a": "nassim_taleb",
+              "b": "peter_lynch",
+              "same_signal": 0.35,
+              "opposite_signal": 0.2,
+              "corr": 0.3112878196840201
+            },
+            {
+              "a": "nassim_taleb",
+              "b": "phil_fisher",
+              "same_signal": 0.325,
+              "opposite_signal": 0.1,
+              "corr": 0.5055000930956277
+            },
+            {
+              "a": "nassim_taleb",
+              "b": "rakesh_jhunjhunwala",
+              "same_signal": 0.625,
+              "opposite_signal": 0.075,
+              "corr": 0.4805709618966969
+            },
+            {
+              "a": "nassim_taleb",
+              "b": "stanley_druckenmiller",
+              "same_signal": 0.475,
+              "opposite_signal": 0.125,
+              "corr": 0.34049549412834273
+            },
+            {
+              "a": "nassim_taleb",
+              "b": "aswath_damodaran",
+              "same_signal": 0.525,
+              "opposite_signal": 0.0,
+              "corr": 0.5716974265217724
+            },
+            {
+              "a": "peter_lynch",
+              "b": "phil_fisher",
+              "same_signal": 0.775,
+              "opposite_signal": 0.0,
+              "corr": 0.6174900406381232
+            },
+            {
+              "a": "peter_lynch",
+              "b": "rakesh_jhunjhunwala",
+              "same_signal": 0.0,
+              "opposite_signal": 0.25,
+              "corr": 0.6125513465242052
+            },
+            {
+              "a": "peter_lynch",
+              "b": "stanley_druckenmiller",
+              "same_signal": 0.625,
+              "opposite_signal": 0.025,
+              "corr": 0.7330015944054054
+            },
+            {
+              "a": "peter_lynch",
+              "b": "aswath_damodaran",
+              "same_signal": 0.325,
+              "opposite_signal": 0.1,
+              "corr": 0.6415982655156857
+            },
+            {
+              "a": "phil_fisher",
+              "b": "rakesh_jhunjhunwala",
+              "same_signal": 0.025,
+              "opposite_signal": 0.2,
+              "corr": 0.6707514508976001
+            },
+            {
+              "a": "phil_fisher",
+              "b": "stanley_druckenmiller",
+              "same_signal": 0.525,
+              "opposite_signal": 0.0,
+              "corr": 0.6471927271008887
+            },
+            {
+              "a": "phil_fisher",
+              "b": "aswath_damodaran",
+              "same_signal": 0.325,
+              "opposite_signal": 0.025,
+              "corr": 0.7990738386500241
+            },
+            {
+              "a": "rakesh_jhunjhunwala",
+              "b": "stanley_druckenmiller",
+              "same_signal": 0.3,
+              "opposite_signal": 0.15,
+              "corr": 0.5683401324350777
+            },
+            {
+              "a": "rakesh_jhunjhunwala",
+              "b": "aswath_damodaran",
+              "same_signal": 0.55,
+              "opposite_signal": 0.025,
+              "corr": 0.8242947246394128
+            },
+            {
+              "a": "stanley_druckenmiller",
+              "b": "aswath_damodaran",
+              "same_signal": 0.6,
+              "opposite_signal": 0.075,
+              "corr": 0.5984439545656084
+            }
+          ]
+        },
+        "a_all_agents_agreement": {
+          "n_pairs": 171,
+          "mean_same_signal": 0.40950292397660815,
+          "mean_opposite_signal": 0.11447368421052631,
+          "mean_corr": 0.34349150111123566,
+          "median_corr": 0.42214200492385545,
+          "share_pairs_corr_negative": 0.20261437908496732,
+          "most_agreeing": [
+            {
+              "a": "peter_lynch",
+              "b": "valuation_analyst",
+              "same_signal": 0.2,
+              "opposite_signal": 0.025,
+              "corr": 0.9098140778348763
+            },
+            {
+              "a": "charlie_munger",
+              "b": "sentiment_analyst",
+              "same_signal": 0.4,
+              "opposite_signal": 0.0,
+              "corr": 0.8972304052346879
+            },
+            {
+              "a": "peter_lynch",
+              "b": "growth_analyst",
+              "same_signal": 0.2,
+              "opposite_signal": 0.0,
+              "corr": 0.8908766521495928
+            }
+          ],
+          "most_opposed": [
+            {
+              "a": "charlie_munger",
+              "b": "growth_analyst",
+              "same_signal": 0.4,
+              "opposite_signal": 0.2,
+              "corr": -0.6623077382073964
+            },
+            {
+              "a": "charlie_munger",
+              "b": "valuation_analyst",
+              "same_signal": 0.3,
+              "opposite_signal": 0.125,
+              "corr": -0.5655380681366953
+            },
+            {
+              "a": "charlie_munger",
+              "b": "cathie_wood",
+              "same_signal": 0.4,
+              "opposite_signal": 0.35,
+              "corr": -0.4478846864088318
+            }
+          ]
+        },
+        "b_cancellation": {
+          "cells": 40,
+          "pm_action_counts": {
+            "hold": 26,
+            "short": 10,
+            "buy": 3,
+            "sell": 1
+          },
+          "pm_hold_share": 0.65,
+          "persona_net_near_zero_share": 0.05,
+          "all_agents_net_near_zero_share": 0.175,
+          "pm_hold_share_when_near_zero": 0.5,
+          "pm_hold_share_when_not_near_zero": 0.6578947368421053,
+          "cells_with_ge3_bull_and_ge3_bear": 0.125,
+          "mean_abs_persona_net": 0.28351923076923075,
+          "mean_persona_split": {
+            "bull": 1.975,
+            "bear": 5.675,
+            "neutral": 5.3500000000000005
+          }
+        },
+        "c_backtest": {
+          "period": [
+            "2025-03-03",
+            "2025-10-31"
+          ],
+          "initial_capital": 100000.0,
+          "strategy_total_return": -0.012675895767211953,
+          "strategy_max_drawdown": -0.09594098634151627,
+          "strategy_sharpe_daily_ann": -0.08815031783024779,
+          "buy_hold_eqw_total_return": 0.5063288001682498,
+          "buy_hold_eqw_max_drawdown": -0.18557011902315723,
+          "buy_hold_sharpe_daily_ann": 1.973935251724213,
+          "spy_total_return": 0.16837106178605699,
+          "n_trades": 14,
+          "traded_notional": 115912.28879547119,
+          "turnover_traded_over_mean_equity": 1.145818932890608,
+          "turnover_traded_over_initial_capital": 1.159122887954712,
+          "mean_gross_exposure_frac": 0.8736069053182031,
+          "mean_net_exposure_frac": -0.3483439398373331,
+          "engine_metrics": {
+            "sharpe_ratio": -0.4372940784703667,
+            "sortino_ratio": -0.6185323778934305,
+            "max_drawdown": -9.594098634151624,
+            "long_short_ratio": null,
+            "gross_exposure": null,
+            "net_exposure": null,
+            "max_drawdown_date": "2025-10-28"
+          },
+          "trades": [
+            {
+              "date": "2025-03-03",
+              "ticker": "AAPL",
+              "action": "short",
+              "qty": 80,
+              "price": 238.02999877929688
+            },
+            {
+              "date": "2025-03-03",
+              "ticker": "GOOGL",
+              "action": "buy",
+              "qty": 87,
+              "price": 167.00999450683594
+            },
+            {
+              "date": "2025-03-03",
+              "ticker": "MSFT",
+              "action": "short",
+              "qty": 51,
+              "price": 388.489990234375
+            },
+            {
+              "date": "2025-03-03",
+              "ticker": "TSLA",
+              "action": "short",
+              "qty": 35,
+              "price": 284.6499938964844
+            },
+            {
+              "date": "2025-04-01",
+              "ticker": "NVDA",
+              "action": "buy",
+              "qty": 91,
+              "price": 110.1500015258789
+            },
+            {
+              "date": "2025-06-02",
+              "ticker": "MSFT",
+              "action": "short",
+              "qty": 2,
+              "price": 461.9700012207031
+            },
+            {
+              "date": "2025-07-01",
+              "ticker": "AAPL",
+              "action": "short",
+              "qty": 25,
+              "price": 207.82000732421875
+            },
+            {
+              "date": "2025-07-01",
+              "ticker": "GOOGL",
+              "action": "buy",
+              "qty": 31,
+              "price": 175.83999633789062
+            },
+            {
+              "date": "2025-07-01",
+              "ticker": "MSFT",
+              "action": "short",
+              "qty": 3,
+              "price": 492.04998779296875
+            },
+            {
+              "date": "2025-07-01",
+              "ticker": "TSLA",
+              "action": "short",
+              "qty": 2,
+              "price": 300.7099914550781
+            },
+            {
+              "date": "2025-08-01",
+              "ticker": "AAPL",
+              "action": "short",
+              "qty": 1,
+              "price": 202.3800048828125
+            },
+            {
+              "date": "2025-08-01",
+              "ticker": "NVDA",
+              "action": "sell",
+              "qty": 91,
+              "price": 173.72000122070312
+            },
+            {
+              "date": "2025-09-02",
+              "ticker": "NVDA",
+              "action": "short",
+              "qty": 60,
+              "price": 170.77999877929688
+            },
+            {
+              "date": "2025-09-02",
+              "ticker": "TSLA",
+              "action": "short",
+              "qty": 8,
+              "price": 329.3599853515625
+            }
+          ],
+          "caveat": "gemini-3.8-flash recalls 12-month returns for windows ending up to mid-2025 almost exactly (contamination probe); Mar-Oct 2025 is therefore not a clean out-of-sample period. 8 monthly decisions only -> no statistical power."
+        },
+        "signal_mix": {
+          "warren_buffett": {
+            "bullish": 0.0,
+            "neutral": 0.7,
+            "bearish": 0.3,
+            "mean_conf": 48.5
+          },
+          "charlie_munger": {
+            "bullish": 0.0,
+            "neutral": 0.6,
+            "bearish": 0.4,
+            "mean_conf": 46.975
+          },
+          "ben_graham": {
+            "bullish": 0.0,
+            "neutral": 0.0,
+            "bearish": 1.0,
+            "mean_conf": 82.575
+          },
+          "bill_ackman": {
+            "bullish": 0.0,
+            "neutral": 0.725,
+            "bearish": 0.275,
+            "mean_conf": 77.625
+          },
+          "cathie_wood": {
+            "bullish": 0.6,
+            "neutral": 0.35,
+            "bearish": 0.05,
+            "mean_conf": 74.8875
+          },
+          "michael_burry": {
+            "bullish": 0.0,
+            "neutral": 0.25,
+            "bearish": 0.75,
+            "mean_conf": 77.25
+          },
+          "mohnish_pabrai": {
+            "bullish": 0.0,
+            "neutral": 0.375,
+            "bearish": 0.625,
+            "mean_conf": 79.575
+          },
+          "nassim_taleb": {
+            "bullish": 0.15,
+            "neutral": 0.3,
+            "bearish": 0.55,
+            "mean_conf": 49.15
+          },
+          "peter_lynch": {
+            "bullish": 0.4,
+            "neutral": 0.6,
+            "bearish": 0.0,
+            "mean_conf": 72.2
+          },
+          "phil_fisher": {
+            "bullish": 0.35,
+            "neutral": 0.625,
+            "bearish": 0.025,
+            "mean_conf": 70.1375
+          },
+          "rakesh_jhunjhunwala": {
+            "bullish": 0.0,
+            "neutral": 0.15,
+            "bearish": 0.85,
+            "mean_conf": 77.95
+          },
+          "stanley_druckenmiller": {
+            "bullish": 0.3,
+            "neutral": 0.4,
+            "bearish": 0.3,
+            "mean_conf": 65.075
+          },
+          "aswath_damodaran": {
+            "bullish": 0.175,
+            "neutral": 0.275,
+            "bearish": 0.55,
+            "mean_conf": 70.225
+          },
+          "fundamentals_analyst": {
+            "bullish": 0.6,
+            "neutral": 0.0,
+            "bearish": 0.4,
+            "mean_conf": 60.0
+          },
+          "growth_analyst": {
+            "bullish": 0.2,
+            "neutral": 0.2,
+            "bearish": 0.6,
+            "mean_conf": 34.75
+          },
+          "news_sentiment": {
+            "bullish": 0.0,
+            "neutral": 1.0,
+            "bearish": 0.0,
+            "mean_conf": 0.0
+          },
+          "sentiment_analyst": {
+            "bullish": 0.0,
+            "neutral": 0.0,
+            "bearish": 1.0,
+            "mean_conf": 75.388
+          },
+          "technical_analyst": {
+            "bullish": 0.325,
+            "neutral": 0.525,
+            "bearish": 0.15,
+            "mean_conf": 19.35
+          },
+          "valuation_analyst": {
+            "bullish": 0.2,
+            "neutral": 0.175,
+            "bearish": 0.625,
+            "mean_conf": 83.6
+          }
+        },
+        "rebalance_dates": [
+          "2025-03-03",
+          "2025-04-01",
+          "2025-05-01",
+          "2025-06-02",
+          "2025-07-01",
+          "2025-08-01",
+          "2025-09-02",
+          "2025-10-01"
+        ]
+      },
+      "provenance": {
+        "script": "quant_lab/episodes/ep05/ai_hedge_fund_probe.py",
+        "params": {
+          "model": "gemini-3.8-flash",
+          "backend": "vertex (ChatVertexAI, location=global, repo default temperature)",
+          "tickers": [
+            "AAPL",
+            "GOOGL",
+            "MSFT",
+            "NVDA",
+            "TSLA"
+          ],
+          "backtest": [
+            "2025-03-03",
+            "2025-10-31"
+          ],
+          "cadence": "graph on first trading day of month, hold otherwise",
+          "initial_capital": 100000,
+          "margin_requirement": 0.0,
+          "near_zero_threshold": 0.1,
+          "signal_value": "sign(bull=+1,neutral=0,bear=-1) x confidence/100",
+          "legacy_commit": "6c41ae8cf5fb4e30eb8cdb6a816eb56ff234989d",
+          "patches": [
+            "src/llm/models.py Vertex branch",
+            "src/llm/api_models.json gemini-3.8-flash",
+            "src/tools/api.py -> free_data.py"
+          ],
+          "run_dir": "runs/ep05/persona_backtest_2025-03-03_2025-10-31"
+        },
+        "seed": null,
+        "data_sources": [
+          "https://query1.finance.yahoo.com/v8/finance/chart/",
+          "https://data.sec.gov/api/xbrl/companyfacts/",
+          "https://data.sec.gov/submissions/ (Form 4)",
+          "https://github.com/virattt/ai-hedge-fund/tree/6c41ae8cf5fb4e30eb8cdb6a816eb56ff234989d"
+        ],
+        "generated_at": "2026-11-05T17:25:49+00:00",
+        "note": "Agents saw SUBSTITUTE data (Yahoo prices, SEC XBRL fundamentals, SEC Form 4; no news). Mar-Oct 2025 may be partly memorised by the model (see ai_hedge_fund_probe.contamination)."
+      }
     }
   }
 }

@@ -94,4 +94,15 @@ Report card rows: the EP01 HA fills, EP01 repainting pivots, EP03 B/C5/cost-awar
 
 ## Amendments
 
-(none)
+1. **2026-11-06, after running H-EP03 / H-EP06: what "net expectancy" means.**
+   - The text above does not say whether "net expectancy" is per-trade return or per-trade R.
+   - The code (`protocol.trade_stats`, written before the runs) uses the **mean net return per trade at fixed notional**.
+     That is the same convention as round 1, and verdicts are computed with it.
+   - The two can disagree. FVG 1h, BTC-H: +0.008% per trade but −0.09R.
+     Both are reported, and the video states which one a verdict uses.
+   - Not re-scored; noted so the reader can judge.
+
+2. **2026-11-06, after running H-EP02: exploratory control added.**
+   - Arm `rule_randveto` vetoes the rule's entries at random, at the LLM's observed veto rate (430/573), with no stop. 20 runs per event.
+   - It was added after seeing that the LLM vetoed 75% of entries, to ask whether the gain is just trading less.
+   - It is labelled exploratory everywhere and does not change the H-EP02 verdicts.

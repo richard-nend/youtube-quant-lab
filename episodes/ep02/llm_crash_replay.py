@@ -40,6 +40,9 @@ from quant_lab.results import write_result
 
 MODEL = "gemini-3.8-flash"
 STEP_MIN = 2
+RULE_STOP_PCT = 1.5          # H-EP02 rule_stop arm (PREREGISTRATION.md)
+VETO_RUNS = 5
+RANDOM_VETO_RATE = 430 / 573   # LLM veto rate observed in the pre-registered rule_veto run
 HORIZON_MIN = 40
 PRE_MIN = 4
 HISTORY = 60
@@ -79,6 +82,19 @@ SYSTEM_BULL = ("You are the BULL researcher on a trading desk. Using only the da
 SYSTEM_BEAR = ("You are the BEAR researcher on a trading desk. Using only the data given, make the strongest "
                "case against being long right now, attacking weaknesses in the bullish view, and recommend "
                "an action. Be concise (max 80 words).")
+VETO_SCHEMA = {
+    "type": "OBJECT",
+    "properties": {"approve": {"type": "BOOLEAN"},
+                   "stop_pct": {"type": "NUMBER", "description": "stop distance in % from average entry if approved; 0 = no stop"},
+                   "reason": {"type": "STRING"}},
+    "required": ["approve", "stop_pct", "reason"],
+}
+SYSTEM_VETO = (
+    "You are the risk manager of a crypto perpetual-futures desk ($10,000 account, up to 20x leverage). "
+    "A fixed trading rule wants to take the action shown below. You cannot propose trades; you can only "
+    "approve or veto this one. If you approve, set a stop distance in percent from the average entry "
+    "(0 = no stop). Prices are indexed (first shown bar = 100). Answer only with the JSON object."
+)
 SYSTEM_RISK = (SYSTEM_TRADER + " You are the final risk manager: you read the bull and bear researchers' "
                "arguments and make the decision, enforcing sound risk management.")
 
@@ -198,7 +214,10 @@ def run_one(event: dict, bars: pd.DataFrame, arm: str, run_id: int, llm: Gemini 
     end = start + pd.Timedelta(minutes=HORIZON_MIN)
     r_series = rsi(bars["close"])
     acc = Account()
-    latencies, steps = [], []
+    latencies, steps, vetoes = [], [], []
+    veto_stop = 0.0
+    rand = np.random.default_rng(
+                                 int(pd.Timestamp(event["trigger_time"]).timestamp()) * 10 + run_id)
     t = start
     while t < end and not acc.liquidated:
         hist = bars.loc[:t].iloc[-HISTORY:]
@@ -210,6 +229,31 @@ def run_one(event: dict, bars: pd.DataFrame, arm: str, run_id: int, llm: Gemini 
         if arm == "rsi_rule":
             d = rule_decision(acc, px, r)
             lat = 0.0
+        elif arm == "rule_stop":
+            d = dict(rule_decision(acc, px, r), stop_pct=RULE_STOP_PCT)
+            lat = 0.0
+        elif arm == "rule_randveto":
+            # EXPLORATORY control (not pre-registered): veto at random with the LLM's observed veto rate, no stop
+            d = rule_decision(acc, px, r)
+            lat = 0.0
+            if d["action"] in ("open_long", "add"):
+                vetoed = bool(rand.random() < RANDOM_VETO_RATE)
+                vetoes.append(vetoed)
+                if vetoed:
+                    d = {"action": "hold", "size_frac": 0, "stop_pct": 0, "reason": "random veto"}
+        elif arm == "rule_veto":
+            d = rule_decision(acc, px, r)
+            lat = 0.0
+            if d["action"] in ("open_long", "add"):
+                out = llm.json(SYSTEM_VETO, prompt + f"\nProposed action: {d['action']} "
+                               f"size_frac={d['size_frac']} (reason: {d['reason']})\n", VETO_SCHEMA, tag=tag + "|veto")
+                v, lat = out["response"], out["latency_s"]
+                vetoes.append(not v.get("approve", False))
+                if v.get("approve", False):
+                    veto_stop = float(v.get("stop_pct", 0) or 0)
+                else:
+                    d = {"action": "hold", "size_frac": 0, "stop_pct": 0, "reason": "veto: " + str(v.get("reason", ""))[:200]}
+            d = dict(d, stop_pct=veto_stop)
         elif arm == "single":
             out = llm.json(SYSTEM_TRADER, prompt, DECISION_SCHEMA, tag=tag)
             d, lat = out["response"], out["latency_s"]
@@ -220,7 +264,8 @@ def run_one(event: dict, bars: pd.DataFrame, arm: str, run_id: int, llm: Gemini 
             fin = llm.json(SYSTEM_RISK, rm_prompt, DECISION_SCHEMA, tag=tag + "|risk")
             d = fin["response"]
             lat = bull["latency_s"] + bear["latency_s"] + fin["latency_s"]  # sequential pipeline
-        latencies.append(lat)
+        if arm != "rule_veto" or lat:
+            latencies.append(lat)
         steps.append({"t": str(t), "price_idx": px / base * 100, "rsi": r, "decision": d, "latency_s": lat,
                       "equity_mtm": acc.mtm(px)})
         # execute at next bar open, then walk 1m bars until the next decision
@@ -246,6 +291,7 @@ def run_one(event: dict, bars: pd.DataFrame, arm: str, run_id: int, llm: Gemini 
         "fees": acc.fees,
         "latency_median_s": statistics.median(latencies) if latencies else None,
         "latency_max_s": max(latencies) if latencies else None,
+        "veto_calls": len(vetoes), "vetoed": int(sum(vetoes)),
         "fills": acc.fills,
         "steps": steps,
     }
@@ -275,7 +321,7 @@ def summarise(rows: list[dict]) -> dict:
             "runs_with_3plus_adds": int(sum(r["adds"] >= 3 for r in rs)),
             "share_traded": float(np.mean([r["traded"] for r in rs])),
             "latency_median_s": (float(np.median([r["latency_median_s"] for r in rs if r["latency_median_s"]]))
-                                 if arm != "rsi_rule" else 0.0),
+                                 if arm not in ("rsi_rule", "rule_stop", "rule_randveto") else 0.0),
         }
     return out
 
@@ -286,6 +332,7 @@ def main():
     ap.add_argument("--runs", type=int, default=5)
     ap.add_argument("--debate-runs", type=int, default=2)
     ap.add_argument("--workers", type=int, default=6)
+    ap.add_argument("--answer", action="store_true", help="H-EP02 arms only (rsi_rule, rule_stop, rule_veto)")
     args = ap.parse_args()
 
     events = json.loads((RESULTS_DIR / "ep02.json").read_text())["experiments"]["crash_events"]["values"]["events"]
@@ -300,11 +347,16 @@ def main():
     bars = pd.concat(frames)
     bars = bars[~bars.index.duplicated()].sort_index()
 
-    tag = "pilot" if args.pilot else "full"
+    tag = ("pilot" if args.pilot else "full") + ("_answer" if args.answer else "")
     llm = Gemini(MODEL, log_path=LOG_DIR / f"calls_{tag}.jsonl")
     jobs = []
     for e in events:
         jobs.append((e, "rsi_rule", 0))
+        if args.answer:
+            jobs.append((e, "rule_stop", 0))
+            jobs += [(e, "rule_veto", i) for i in range(1 if args.pilot else VETO_RUNS)]
+            jobs += [(e, "rule_randveto", i) for i in range(1 if args.pilot else 20)]
+            continue
         jobs += [(e, "single", i) for i in range(args.runs)]
         jobs += [(e, "debate", i) for i in range(args.debate_runs)]
 
@@ -316,7 +368,7 @@ def main():
     jobs = [j for j in jobs if (j[0]["trigger_time"], j[1], j[2]) not in done]
     print(f"{len(rows)} runs already done, {len(jobs)} to go", flush=True)
     with ThreadPoolExecutor(args.workers) as ex:
-        futs = {ex.submit(run_one, e, bars, arm, i, None if arm == "rsi_rule" else llm): (e, arm, i)
+        futs = {ex.submit(run_one, e, bars, arm, i, None if arm in ("rsi_rule", "rule_stop", "rule_randveto") else llm): (e, arm, i)
                 for e, arm, i in jobs}
         for f in as_completed(futs):
             try:
@@ -337,7 +389,7 @@ def main():
     summary = summarise(rows)
     print(json.dumps(summary, indent=1))
     if not args.pilot:
-        write_result("ep02", "llm_crash_replay", {"summary": summary,
+        write_result("ep02", "llm_crash_replay" + ("_answer" if args.answer else ""), {"summary": summary,
                      "per_run": [{k: v for k, v in r.items() if k not in ("steps", "fills")} for r in rows]},
                      params={"model": MODEL, "backend": llm.backend, "step_min": STEP_MIN, "horizon_min": HORIZON_MIN, "leverage": LEVERAGE,
                              "equity0": EQUITY0, "costs": COSTS.as_dict(), "runs": args.runs,

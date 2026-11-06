@@ -45,8 +45,8 @@ def atr(b, n=14):
     return tr.ewm(alpha=1 / n, adjust=False).mean()
 
 
-def main():
-    b = binance.klines("BTCUSDT", "5m", START, END, market="um")
+def signals(b: pd.DataFrame):
+    """(absorb idx, V1 taker signals, V2 limit signals, V4 failure signals, skipped_by_cost_rule)."""
     o, h, l, c = (b[x].to_numpy() for x in ("open", "high", "low", "close"))
     a = atr(b).to_numpy()
     delta = (2 * b.taker_buy_volume - b.volume)
@@ -81,6 +81,13 @@ def main():
                     break
                 v4.append(Signal(bar=j, side=s, stop=stop, target=target))
                 break
+    return absorb, v1, v2, v4, skipped_cost
+
+
+def main():
+    b = binance.klines("BTCUSDT", "5m", START, END, market="um")
+    absorb, v1, v2, v4, skipped_cost = signals(b)
+    rt = COSTS.round_trip("taker", "taker")
 
     runs = {
         "V1_taker": simulate(b, v1, COSTS, max_hold=HOLD),

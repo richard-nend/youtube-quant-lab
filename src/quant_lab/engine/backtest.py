@@ -111,6 +111,7 @@ def simulate(
             "gross_ret": gross,
             "cost": cost,
             "net_ret": gross - cost,
+            "risk": risk,
             "r_multiple": (gross - cost) / risk if risk > 0 else np.nan,
         })
         busy_until = exit_bar

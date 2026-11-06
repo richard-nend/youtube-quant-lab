@@ -3271,7 +3271,7 @@
           "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2026-09.zip",
           "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/5m/BTCUSDT-5m-2026-10.zip"
         ],
-        "generated_at": "2026-11-05T16:24:22+00:00",
+        "generated_at": "2026-11-06T05:05:37+00:00",
         "note": "bar-based engine (5m), not a tick engine; 'through' fill approximates queue position"
       }
     },
@@ -3323,6 +3323,216 @@
         ],
         "generated_at": "2026-11-05T16:34:17+00:00",
         "note": "fees excluded: this isolates selection, maker fee would subtract a further 2bp"
+      }
+    },
+    "flow_confirmed_breakout": {
+      "values": {
+        "T0": {
+          "BTC-D": {
+            "trades": 270,
+            "win_rate": 0.3814814814814815,
+            "expectancy": 0.0009417161332081946,
+            "expectancy_before_costs": 0.002101716133208194,
+            "expectancy_r": -0.02758765656662016,
+            "ci95": [
+              -0.0013333904682008857,
+              0.00326185612361538
+            ],
+            "sum_net": 0.2542633559662125
+          },
+          "BTC-H": {
+            "trades": 300,
+            "win_rate": 0.3566666666666667,
+            "expectancy": -0.0019343940527279872,
+            "expectancy_before_costs": -0.0007678940527279874,
+            "expectancy_r": -0.09382886183655259,
+            "ci95": [
+              -0.0040996196828241484,
+              0.0001920700668351439
+            ],
+            "sum_net": -0.5803182158183962
+          },
+          "ETH-H": {
+            "trades": 540,
+            "win_rate": 0.38333333333333336,
+            "expectancy": -1.8977480101589694e-05,
+            "expectancy_before_costs": 0.0011410225198984101,
+            "expectancy_r": 0.008167948357578423,
+            "ci95": [
+              -0.002554655928328771,
+              0.002578620069164811
+            ],
+            "sum_net": -0.010247839254858435
+          },
+          "verdict": "FAIL"
+        },
+        "T1": {
+          "BTC-D": {
+            "trades": 227,
+            "win_rate": 0.43612334801762115,
+            "expectancy": 0.0018471720316003745,
+            "expectancy_before_costs": 0.002996511238648832,
+            "expectancy_r": 0.0806840946529612,
+            "ci95": [
+              -0.0006948940315068203,
+              0.004442621823034066
+            ],
+            "sum_net": 0.419308051173285
+          },
+          "BTC-H": {
+            "trades": 227,
+            "win_rate": 0.3744493392070485,
+            "expectancy": -0.0012665669675869181,
+            "expectancy_before_costs": -0.00011326300282920907,
+            "expectancy_r": -0.015927466159109317,
+            "ci95": [
+              -0.0037334673185249233,
+              0.001301016835521345
+            ],
+            "sum_net": -0.2875107016422304
+          },
+          "ETH-H": {
+            "trades": 446,
+            "win_rate": 0.38789237668161436,
+            "expectancy": 5.587883472988647e-05,
+            "expectancy_before_costs": 0.001212605292128989,
+            "expectancy_r": 0.027463569956492476,
+            "ci95": [
+              -0.0026660748897735765,
+              0.0028418863067249
+            ],
+            "sum_net": 0.024921960289529366
+          },
+          "verdict": "FAIL"
+        },
+        "T2": {
+          "BTC-D": {
+            "trades": 4,
+            "win_rate": 0.75,
+            "expectancy": 0.015800843584175637,
+            "expectancy_before_costs": 0.016763343584175635,
+            "expectancy_r": 1.4248366237415295,
+            "ci95": [
+              0.005103678184508165,
+              0.024316346913481418
+            ],
+            "sum_net": 0.06320337433670255
+          },
+          "BTC-H": {
+            "trades": 6,
+            "win_rate": 0.16666666666666666,
+            "expectancy": -0.014830808337189277,
+            "expectancy_before_costs": -0.013530808337189277,
+            "expectancy_r": -0.8202955000314663,
+            "ci95": [
+              -0.02292077816599301,
+              -0.004917750300151291
+            ],
+            "sum_net": -0.08898485002313566
+          },
+          "ETH-H": {
+            "trades": 8,
+            "win_rate": 0.25,
+            "expectancy": -0.016503426613234003,
+            "expectancy_before_costs": -0.015315926613234004,
+            "expectancy_r": -0.29604622826800336,
+            "ci95": [
+              -0.034860134941008813,
+              0.00590069541675149
+            ],
+            "sum_net": -0.13202741290587203
+          },
+          "verdict": "FAIL"
+        }
+      },
+      "provenance": {
+        "script": "quant_lab/episodes/ep06/flow_confirmed_breakout.py",
+        "params": {
+          "sets": {
+            "BTC-D": [
+              "BTCUSDT",
+              "2025-11-01",
+              "2026-10-31"
+            ],
+            "BTC-H": [
+              "BTCUSDT",
+              "2024-11-01",
+              "2025-10-31"
+            ],
+            "ETH-H": [
+              "ETHUSDT",
+              "2024-11-01",
+              "2026-10-31"
+            ]
+          },
+          "donchian": 20,
+          "z_window": 720,
+          "z_threshold": 1.0,
+          "sl_atr": 2.0,
+          "tp_atr": 4.0,
+          "max_hold": 48,
+          "costs": {
+            "taker_fee": 0.0005,
+            "maker_fee": 0.0002,
+            "slippage_bps": 1.5
+          },
+          "preregistration": "PREREGISTRATION.md H-EP06 (commit 197476e)"
+        },
+        "seed": null,
+        "data_sources": [
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-10.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-11.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-12.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-01.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-02.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-03.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-04.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-05.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-06.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-07.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-08.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-09.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-10.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2024-10.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2024-11.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2024-12.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-01.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-02.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-03.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-04.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-05.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-06.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-07.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-08.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-09.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2024-10.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2024-11.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2024-12.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2025-01.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2025-02.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2025-03.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2025-04.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2025-05.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2025-06.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2025-07.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2025-08.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2025-09.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2025-10.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2025-11.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2025-12.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2026-01.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2026-02.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2026-03.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2026-04.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2026-05.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2026-06.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2026-07.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2026-08.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2026-09.zip",
+          "https://data.binance.vision/data/futures/um/monthly/klines/ETHUSDT/1h/ETHUSDT-1h-2026-10.zip"
+        ],
+        "generated_at": "2026-11-06T05:03:47+00:00",
+        "note": ""
       }
     }
   }

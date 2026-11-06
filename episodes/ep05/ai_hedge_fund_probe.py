@@ -21,9 +21,28 @@ Pipeline experiment (a)-(c)  [requires financialdatasets.ai data]
                   |mean(s*conf/100)| over personas < 0.10 ("near-zero net signal")
   (c) backtest    built-in src/backtesting engine Mar-03-2025..Oct-31-2025, $100k, vs equal-weight
                   buy-and-hold of the 5 tickers; turnover = sum|trade notional| / mean equity
-  STATUS: BLOCKED. financialdatasets.ai returns HTTP 402/401 for every endpoint without a key
-          (checked 2026-11-06, incl. AAPL). Per instructions no key/account was created and
-          nothing was paid. `--check-data` re-runs that check.
+  STATUS (first attempt): blocked. financialdatasets.ai returns HTTP 402/401 for every endpoint
+          without a key (checked 2026-11-06, incl. AAPL). No key/account created, nothing paid.
+          `--check-data` re-runs that check.
+  STATUS (owner-approved second attempt): DATA LAYER SUBSTITUTED -> the agents saw substitute data.
+          vendor/ai-hedge-fund-legacy/DATA_SUBSTITUTIONS.md has the full table. In short:
+            prices        Yahoo chart API daily OHLCV (split-adj., not dividend-adj.)
+            fundamentals  SEC EDGAR XBRL companyfacts, only facts with filed <= analysis date;
+                          ratios computed by our own formulas; TTM = last 4 fiscal quarters
+            insider       SEC EDGAR Form 4 XML, filing date <= analysis date
+            news          NONE (empty list) -> Munger, Burry, Taleb, Lynch, Fisher, Druckenmiller lose
+                          news input; News-Sentiment agent is always neutral/0; Sentiment agent is
+                          insider-only
+          Agents, prompts, risk manager, portfolio manager and backtest engine are unchanged.
+  cadence the built-in BacktestEngine runs daily from 2025-03-03 to 2025-10-31 (marks, fills at
+          that day's close); the agent graph runs on the first trading day of each month (8 dates)
+          and returns hold on other days (daily would need ~11k LLM calls). Signals for (a)/(b)
+          come from those 8 graph runs (8 dates x 5 tickers = 40 cells, 13 personas each).
+  extra (descriptive, not pre-registered): same (a)/(b) stats over all 18 non-risk agents,
+          LLM fallback count (call_llm default_factory -> neutral), per-persona bull/bear/neutral mix.
+  caveat  the contamination probe shows gemini-3.8-flash recalls 12-month returns for windows ending
+          up to mid-2025 almost exactly; Mar-Oct 2025 may be partly memorised, so (c) is not a clean
+          out-of-sample test.
 
 Contamination probe (d)  [no market data given to the model]
   question  "Estimate <ticker>'s price return over the 12 months after <date>" (JSON: return_pct,
@@ -46,14 +65,19 @@ Contamination probe (d)  [no market data given to the model]
 Usage (from quant_lab/):
   uv run python episodes/ep05/ai_hedge_fund_probe.py --check-data
   uv run python episodes/ep05/ai_hedge_fund_probe.py --contamination
+  uv run python episodes/ep05/ai_hedge_fund_probe.py --pipeline        # legacy graph + engine, then --analyze
+  uv run python episodes/ep05/ai_hedge_fund_probe.py --analyze runs/ep05/persona_backtest_2025-03-03_2025-10-31
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
+import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -202,15 +226,188 @@ def contamination() -> None:
     )
 
 
+LEGACY = LAB_ROOT / "vendor" / "ai-hedge-fund-legacy"
+RUNNER = Path(__file__).resolve().parent / "_legacy_backtest_runner.py"
+BT_START, BT_END = "2025-03-03", "2025-10-31"
+PERSONAS = ["warren_buffett", "charlie_munger", "ben_graham", "bill_ackman", "cathie_wood", "michael_burry",
+            "mohnish_pabrai", "nassim_taleb", "peter_lynch", "phil_fisher", "rakesh_jhunjhunwala",
+            "stanley_druckenmiller", "aswath_damodaran"]
+SIGN = {"bullish": 1, "neutral": 0, "bearish": -1}
+
+
+def run_pipeline(out_dir: Path, cap: int = 1300) -> None:
+    env = {k: v for k, v in os.environ.items() if k not in ("GEMINI_API_KEY", "GOOGLE_API_KEY")}
+    env.setdefault("VERTEX_PROJECT", "gen-lang-client-0060132691")
+    env["PYTHONPATH"] = str(LEGACY)
+    subprocess.run([str(LEGACY / ".venv" / "bin" / "python"), str(RUNNER), str(out_dir), BT_START, BT_END, str(cap)],
+                   cwd=LEGACY, env=env, check=True)
+
+
+def _yahoo_close(ticker: str) -> pd.Series:
+    p1 = int(datetime(2025, 1, 1, tzinfo=timezone.utc).timestamp())
+    p2 = int(datetime(2025, 11, 30, tzinfo=timezone.utc).timestamp())
+    r = requests.get(YAHOO.format(t=ticker, p1=p1, p2=p2), headers={"User-Agent": "Mozilla/5.0"}, timeout=30)
+    r.raise_for_status()
+    res = r.json()["chart"]["result"][0]
+    idx = pd.to_datetime(res["timestamp"], unit="s", utc=True).tz_convert("America/New_York").normalize().tz_localize(None)
+    return pd.Series(res["indicators"]["quote"][0]["close"], index=idx).dropna()
+
+
+def _agreement(cells: pd.DataFrame, agents: list[str]) -> dict:
+    """cells: rows=(date,ticker), columns per agent: s*conf/100 and sign."""
+    pairs = []
+    for i, a in enumerate(agents):
+        for b in agents[i + 1:]:
+            sa, sb = cells[f"{a}__sig"], cells[f"{b}__sig"]
+            va, vb = cells[f"{a}__val"], cells[f"{b}__val"]
+            corr = float(va.corr(vb)) if va.std() > 0 and vb.std() > 0 else None
+            pairs.append({"a": a, "b": b, "same_signal": float((sa == sb).mean()),
+                          "opposite_signal": float(((sa * sb) == -1).mean()), "corr": corr})
+    p = pd.DataFrame(pairs)
+    return {"n_pairs": len(p), "mean_same_signal": float(p.same_signal.mean()),
+            "mean_opposite_signal": float(p.opposite_signal.mean()),
+            "mean_corr": float(p["corr"].dropna().mean()), "median_corr": float(p["corr"].dropna().median()),
+            "share_pairs_corr_negative": float((p["corr"].dropna() < 0).mean()),
+            "most_agreeing": p.sort_values("corr", ascending=False).head(3).to_dict("records"),
+            "most_opposed": p.sort_values("corr").head(3).to_dict("records"),
+            "pairs": p.to_dict("records")}
+
+
+def analyze(run_dir: Path) -> None:
+    runs = json.loads((run_dir / "rebalances.json").read_text())
+    summ = json.loads((run_dir / "summary.json").read_text())
+    trades = json.loads((run_dir / "trades.json").read_text())
+    pv = pd.DataFrame(json.loads((run_dir / "portfolio_values.json").read_text()))
+    pv["Date"] = pd.to_datetime(pv["Date"])
+    pv = pv.set_index("Date")
+
+    rows, others = [], []
+    for r in runs:
+        sigs = r["analyst_signals"]
+        all_agents = sorted(k.removesuffix("_agent") for k in sigs if not k.startswith("risk"))
+        for t in TICKERS:
+            row = {"date": r["date"], "ticker": t, "pm_action": r["decisions"][t]["action"],
+                   "pm_qty": r["decisions"][t]["quantity"]}
+            for a in all_agents:
+                s = sigs[f"{a}_agent"].get(t, {})
+                sg = SIGN.get(str(s.get("signal")).lower(), 0)
+                conf = float(s.get("confidence") or 0)
+                row[f"{a}__sig"], row[f"{a}__val"], row[f"{a}__conf"] = sg, sg * conf / 100, conf
+            rows.append(row)
+        others = all_agents
+    cells = pd.DataFrame(rows)
+    nonpersona = [a for a in others if a not in PERSONAS]
+    allag = PERSONAS + nonpersona
+
+    def net(agents):
+        return cells[[f"{a}__val" for a in agents]].mean(axis=1)
+
+    cells["net_persona"] = net(PERSONAS)
+    cells["net_all"] = net(allag)
+    cells["n_bull"] = (cells[[f"{a}__sig" for a in PERSONAS]] == 1).sum(axis=1)
+    cells["n_bear"] = (cells[[f"{a}__sig" for a in PERSONAS]] == -1).sum(axis=1)
+    cells.to_csv(run_dir / "cells.csv", index=False)
+
+    mix = {a: {k: float((cells[f"{a}__sig"] == v).mean()) for k, v in SIGN.items()} | {
+        "mean_conf": float(cells[f"{a}__conf"].mean())} for a in allag}
+    hold = cells.pm_action.eq("hold")
+    near0 = cells.net_persona.abs() < 0.10
+    b = {
+        "cells": len(cells),
+        "pm_action_counts": cells.pm_action.value_counts().to_dict(),
+        "pm_hold_share": float(hold.mean()),
+        "persona_net_near_zero_share": float(near0.mean()),
+        "all_agents_net_near_zero_share": float((cells.net_all.abs() < 0.10).mean()),
+        "pm_hold_share_when_near_zero": float(hold[near0].mean()) if near0.any() else None,
+        "pm_hold_share_when_not_near_zero": float(hold[~near0].mean()) if (~near0).any() else None,
+        "cells_with_ge3_bull_and_ge3_bear": float(((cells.n_bull >= 3) & (cells.n_bear >= 3)).mean()),
+        "mean_abs_persona_net": float(cells.net_persona.abs().mean()),
+        "mean_persona_split": {"bull": float(cells.n_bull.mean()), "bear": float(cells.n_bear.mean()),
+                               "neutral": float(13 - cells.n_bull.mean() - cells.n_bear.mean())},
+    }
+
+    # (c) backtest vs equal-weight buy & hold (price-only closes, same as the engine)
+    closes = pd.DataFrame({t: _yahoo_close(t) for t in TICKERS + ["SPY"]})
+    closes = closes.loc[BT_START:BT_END]
+    bh = (closes[TICKERS] / closes[TICKERS].iloc[0]).mean(axis=1)
+    eq = pv["Portfolio Value"].astype(float)
+    eq = eq[~eq.index.duplicated(keep="last")]
+    notional = sum(abs(t["qty"] * t["price"]) for t in trades)
+    dd = lambda s: float((s / s.cummax() - 1).min())
+    ret = lambda s: float(s.iloc[-1] / s.iloc[0] - 1)
+    dret = eq.pct_change().dropna()
+    bret = bh.pct_change().dropna()
+    c = {
+        "period": [BT_START, BT_END], "initial_capital": 100000.0,
+        "strategy_total_return": ret(eq), "strategy_max_drawdown": dd(eq),
+        "strategy_sharpe_daily_ann": float(dret.mean() / dret.std() * np.sqrt(252)) if dret.std() > 0 else None,
+        "buy_hold_eqw_total_return": ret(bh), "buy_hold_eqw_max_drawdown": dd(bh),
+        "buy_hold_sharpe_daily_ann": float(bret.mean() / bret.std() * np.sqrt(252)),
+        "spy_total_return": ret(closes["SPY"]),
+        "n_trades": len(trades), "traded_notional": notional,
+        "turnover_traded_over_mean_equity": notional / float(eq.mean()),
+        "turnover_traded_over_initial_capital": notional / 100000.0,
+        "mean_gross_exposure_frac": float((pv["Gross Exposure"].astype(float) / pv["Portfolio Value"].astype(float)).mean())
+        if "Gross Exposure" in pv else None,
+        "mean_net_exposure_frac": float((pv["Net Exposure"].astype(float) / pv["Portfolio Value"].astype(float)).mean())
+        if "Net Exposure" in pv else None,
+        "engine_metrics": summ["engine_metrics"],
+        "trades": trades,
+        "caveat": "gemini-3.8-flash recalls 12-month returns for windows ending up to mid-2025 almost exactly "
+                  "(contamination probe); Mar-Oct 2025 is therefore not a clean out-of-sample period. "
+                  "8 monthly decisions only -> no statistical power.",
+    }
+    values = {
+        "data_substituted": True,
+        "substitution_doc": "quant_lab/vendor/ai-hedge-fund-legacy/DATA_SUBSTITUTIONS.md",
+        "llm_calls": summ["llm_calls"], "llm_errors": summ["llm_errors"],
+        "llm_fallbacks_to_default": len(summ["fallbacks"]), "fallbacks": summ["fallbacks"],
+        "a_persona_agreement": _agreement(cells, PERSONAS),
+        "a_all_agents_agreement": {k: v for k, v in _agreement(cells, allag).items() if k != "pairs"},
+        "b_cancellation": b,
+        "c_backtest": c,
+        "signal_mix": mix,
+        "rebalance_dates": [r["date"] for r in runs],
+    }
+    print(json.dumps({k: values[k] for k in ("llm_calls", "llm_fallbacks_to_default")}, indent=1))
+    print(json.dumps({k: v for k, v in values["a_persona_agreement"].items() if k != "pairs"}, indent=1))
+    print(json.dumps(b, indent=1))
+    print(json.dumps({k: v for k, v in c.items() if k not in ("trades", "engine_metrics")}, indent=1))
+    print(json.dumps({a: {k: round(v, 2) for k, v in m.items()} for a, m in mix.items()}))
+    write_result(
+        "ep05", "persona_vote_experiment", values,
+        params={"model": MODEL, "backend": "vertex (ChatVertexAI, location=global, repo default temperature)",
+                "tickers": TICKERS, "backtest": [BT_START, BT_END], "cadence": "graph on first trading day of month, hold otherwise",
+                "initial_capital": 100000, "margin_requirement": 0.0,
+                "near_zero_threshold": 0.10, "signal_value": "sign(bull=+1,neutral=0,bear=-1) x confidence/100",
+                "legacy_commit": LEGACY_COMMIT, "patches": ["src/llm/models.py Vertex branch", "src/llm/api_models.json gemini-3.8-flash",
+                                                            "src/tools/api.py -> free_data.py"],
+                "run_dir": str(run_dir.relative_to(LAB_ROOT))},
+        sources=["https://query1.finance.yahoo.com/v8/finance/chart/",
+                 "https://data.sec.gov/api/xbrl/companyfacts/", "https://data.sec.gov/submissions/ (Form 4)",
+                 f"https://github.com/virattt/ai-hedge-fund/tree/{LEGACY_COMMIT}"],
+        note="Agents saw SUBSTITUTE data (Yahoo prices, SEC XBRL fundamentals, SEC Form 4; no news). "
+             "Mar-Oct 2025 may be partly memorised by the model (see ai_hedge_fund_probe.contamination).",
+    )
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--check-data", action="store_true")
     ap.add_argument("--contamination", action="store_true")
+    ap.add_argument("--pipeline", action="store_true", help="run the legacy graph + engine (~530 LLM calls)")
+    ap.add_argument("--analyze", type=Path, help="run dir produced by --pipeline")
     a = ap.parse_args()
     if a.check_data:
         print(check_data())
     if a.contamination:
         contamination()
+    if a.pipeline:
+        out = LOG_DIR / f"persona_backtest_{BT_START}_{BT_END}"
+        run_pipeline(out)
+        analyze(out)
+    elif a.analyze:
+        analyze(a.analyze)
 
 
 if __name__ == "__main__":
