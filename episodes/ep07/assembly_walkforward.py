@@ -23,8 +23,11 @@ from quant_lab.results import write_result
 
 HERE = Path(__file__).resolve().parent
 EPS = HERE.parent
-LAYA_DIR = LAB_ROOT / "vendor" / "laya" / "model"
-CACHE = LAB_ROOT / "runs" / "ep07_laya_answers.jsonl"
+# Amendment 3 re-test: LAYA_CKPT=model-en | model-typed (default = the registered multilingual checkpoint)
+LAYA_CKPT = os.environ.get("LAYA_CKPT", "model")
+LAYA_DIR = LAB_ROOT / "vendor" / "laya" / LAYA_CKPT
+CACHE = LAB_ROOT / "runs" / ("ep07_laya_answers.jsonl" if LAYA_CKPT == "model" else f"ep07_laya_answers_{LAYA_CKPT}.jsonl")
+RESULT_KEY = "assembly_walkforward" + ("" if LAYA_CKPT == "model" else f"_{LAYA_CKPT.replace('model-', 'laya_')}")
 COSTS = CostModel()
 START, END = "2022-11-01", "2026-10-31"
 MONTHS = pd.date_range("2023-11-01", "2026-10-01", freq="MS", tz="UTC")
@@ -228,9 +231,9 @@ def main():
 
     out["verdict_L1"] = verdict({s: out[s]["L1"]["stats"] for s in ("BTCUSDT", "ETHUSDT")}, primary="BTCUSDT")
     out["verdict_L2"] = verdict({s: out[s]["L2"]["stats"] for s in ("BTCUSDT", "ETHUSDT")}, primary="BTCUSDT")
-    write_result("ep07", "assembly_walkforward", out,
+    write_result("ep07", RESULT_KEY, out,
                  params={"candidates": {k: v[0] for k, v in CANDIDATES.items()}, "months": "2023-11..2026-10",
-                         "laya": "convaiinnovations/laya-multilingual@1720e3e3, laya 0.4.22, cpu", "q1": Q1, "q2": Q2,
+                         "laya": {"model": "convaiinnovations/laya-multilingual@1720e3e3", "model-en": "convaiinnovations/laya@7b928d82", "model-typed": "convaiinnovations/laya-typed-decisions@e929ae5c"}[LAYA_CKPT] + ", laya 0.4.22, cpu", "q1": Q1, "q2": Q2,
                          "veto_threshold": 0.5, "n_random": N_RAND, "risk_per_trade": 0.02, "leverage_cap": 3,
                          "costs": COSTS.as_dict(), "preregistration": "PREREGISTRATION.md H-EP07B (commit 73cc6ff)"},
                  seed=SEED)
