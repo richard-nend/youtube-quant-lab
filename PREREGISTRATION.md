@@ -180,3 +180,28 @@ Engine fix first (commit before this one): limit fills no longer count a same-ba
    - Arm `rule_randveto` vetoes the rule's entries at random, at the LLM's observed veto rate (430/573), with no stop. 20 runs per event.
    - It was added after seeing that the LLM vetoed 75% of entries, to ask whether the gain is just trading less.
    - It is labelled exploratory everywhere and does not change the H-EP02 verdicts.
+
+3. **2026-11-07, after running H-EP07B (assembly) and before any live run or Laya re-test.**
+   - **Live engine.** The live test does not use the Toobit simulator.
+     - It replays the same `simulate` engine on live Binance USDT-M bars: archive files, plus the public REST klines for the last days.
+     - Fills, costs and slippage are exactly the backtest's, so live vs backtest differs only by the future.
+   - **Live tracks.** All tracks share one signal stream, the `L1` monthly selection.
+     - Track 1, as registered: `L1` + Laya-multilingual brake + 2% risk, leverage cap 3.
+     - Track 2: `L1` only, fixed notional.
+     - Track 3: `L1` + Laya English (`convaiinnovations/laya`, revision pinned at download) brake, fixed notional. Same question and threshold.
+     - Track 4 (exploratory, added after seeing L3): `L1` + 0.5% risk, leverage cap 3.
+     - These are fixed now, before the Laya re-test is run, whatever it shows.
+   - **Live objective.** The 13 weeks cannot show a +0.1%/trade edge. Each month the live per-trade mean, win rate and
+     trade frequency are compared with the backtest's 95% range for the same number of trades: L1 trades over the 36 months,
+     resampled 10,000 times, seed 20261107.
+     - "Within range" or "outside range" is the monthly verdict.
+     - Missed signals, late records and costs are reported alongside.
+     - Week 13 is the first checkpoint; the run continues afterwards.
+   - **Late records.** A signal recorded more than 70 minutes after its bar closed (for example, the machine was off)
+     is computed by the same code but flagged `late` and reported separately.
+   - **Split of the 36-month walk-forward.**
+     - 2023-11 → 2024-10 was not used to design any EP03/EP06 candidate; it is reported on its own as the cleaner test.
+     - 2024-11 → 2026-10 overlaps the design periods and is labelled as such.
+   - **Laya re-test (backtest only).** L2 is repeated with `laya` (English) and `laya-typed-decisions`.
+     - The states, question, threshold and random-veto control are unchanged.
+     - All three checkpoints are reported.
