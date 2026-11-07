@@ -125,6 +125,47 @@ EP07 asks how much of a "best backtest" is the search itself. Its own periods (n
 - **Engine note**: market entries only, so the same-bar limit-fill issue does not apply.
   Trades where the entry open is already beyond the stop are counted and reported.
 
+## H-EP07B: assembling the survivors of EP01–EP06, walk-forward + live paper test (written 2026-11-07, before any of this code was run)
+
+EP03 and EP06 told viewers their best candidates would be re-tested in EP07. This is that test.
+Engine fix first (commit before this one): limit fills no longer count a same-bar target; an open beyond the stop exits at that open.
+
+- **Data**: BTCUSDT and ETHUSDT perp, from 2022-11-01. Out-of-sample months 2023-11 … 2026-10 (36). Costs as in Common rules.
+- **Entry candidates (existing code, parameters unchanged unless stated)**:
+  - `FVG-1h`: EP03 `B_causal_fvg_only` on 1h, no stop-width rule (the EP03 paper PASS).
+  - `FVG-4h`: the same on 4h (EP03 WEAK).
+  - `FLOW-1h`: EP06 `T1` (Donchian 20 breakout + breakout-bar delta z ≥ +1, stop 2 ATR, target 4 ATR, hold 48 bars, z over 720 bars).
+  - `FLOW-4h`: `T1` on 4h with z over 180 bars (30 days) and hold 12 bars (48 h); everything else the same.
+- **Layers, added one at a time and each reported**:
+  - `L0`: each candidate alone, fixed notional, over all 36 months (no selection).
+  - `L1 selection`: at the start of each month, trade only the candidate with the best net sum over the previous 12 months
+    (≥ 30 trades there; otherwise sit out). This is the walk-forward.
+  - `L2 brake (Laya)`: `convaiinnovations/laya-multilingual` rev 1720e3e3, local CPU, `laya` 0.4.22.
+    - For every L1 entry, ask one yes/no ("noul") question.
+      - The state holds only past-bar facts: strategy type, side, last 24 h and 7 d return, ATR %, breakout-bar delta z,
+        and distance from the 20-day high/low.
+      - It holds no ticker, no dates and no prices, so the model cannot recall the outcome (EP05 lesson).
+    - Question: "Should this trade entry be blocked because conditions are dangerous for it?" Veto if noul ≥ 0.5.
+    - Control: random veto of L1 entries at Laya's observed veto rate, 20 runs, seed 20261107.
+    - Robustness: the same with a second phrasing, "Is this a bad moment to open this position?", reported, not used for verdicts.
+  - `L3 sizing (EP04)`: risk 2% of current equity per trade (notional = 2% / stop distance), leverage capped at 3×, compounding.
+- **Reported for every layer**: trades, win rate, net expectancy (fixed notional) with bootstrap CI, the report card (6 checks),
+  the worst month, and the max drawdown. For L3 also final equity, plus the probability of a −50% drawdown
+  (block bootstrap of monthly trade sequences, 10,000 resamples).
+- **Hypotheses (predictions)**:
+  - (a) `L1` verdict (PASS/WEAK/FAIL as in Common rules; sets = BTC and ETH out-of-sample, primary BTC).
+  - (b) Laya brake: `L2` max drawdown and worst month are smaller than `L1`'s, and smaller than the random-veto median.
+  - (c) Laya brake: `L2` net expectancy > random-veto median expectancy (does the model pick, or does it only trade less?).
+  - (d) `L3`: probability of a −50% drawdown < 5%.
+- **Live paper test (H-EP07-LIVE)**:
+  - Start: the first full UTC hour after the live runner is committed. Duration: 13 weeks.
+  - Runs the exact `L1 + L2 + L3` procedure, unchanged, on live Binance data: hourly bars, simulated fills by the same engine rules,
+    and paper equity of 10,000 USDT. No real money.
+  - Every signal, Laya answer, fill and equity value is appended to `live/` and committed daily to the public repo.
+  - Nothing in the live rules may change during the 13 weeks. A bug fix that changes decisions is logged as an amendment,
+    and both versions are reported.
+  - Reported monthly in EP08 onward, whatever it shows.
+
 ## Amendments
 
 1. **2026-11-06, after running H-EP03 / H-EP06: what "net expectancy" means.**
