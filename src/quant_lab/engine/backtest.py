@@ -7,6 +7,9 @@ Rules (documented because every one of them changes the result):
     fill="through" -> filled only if the bar trades BEYOND the limit by ``through_ticks``
                       (models queue position / adverse selection, EP06)
 - If stop and target are both inside one bar, the STOP is assumed first.
+- On the bar a LIMIT order fills, only the stop is checked: the bar's high/low may have come
+  before the fill, so a same-bar target would be look-ahead.
+- If a bar opens beyond the stop (including the entry bar), the exit is at that worse open.
 - Unfilled limit orders expire after ``limit_ttl`` bars.
 - Positions still open after ``max_hold`` bars exit at that bar's close (taker).
 """
@@ -84,10 +87,12 @@ def simulate(
                 stop_hit, tgt_hit = l[j] <= s.stop, h[j] >= s.target
             else:
                 stop_hit, tgt_hit = h[j] >= s.stop, l[j] <= s.target
+            if entry_type == "maker" and j == fill_bar:
+                tgt_hit = False
             if stop_hit:
                 # a gap through the stop fills at the worse open
                 gap = (o[j] < s.stop) if s.side > 0 else (o[j] > s.stop)
-                exit_px = o[j] if (gap and j > fill_bar) else s.stop
+                exit_px = o[j] if gap else s.stop
                 exit_bar, exit_type, reason = j, "taker", "stop"
                 break
             if tgt_hit:

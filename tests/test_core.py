@@ -55,3 +55,18 @@ def test_cvd_sign_convention():
     # first trade: buyer was taker -> +2 ; second: seller was taker -> -1
     assert list(signed_volume(tr)) == [2.0, -1.0]
     assert cvd(tr).iloc[-1] == 1.0
+
+
+def test_limit_fill_bar_does_not_count_target():
+    # fills at 99 and the same bar's high reaches the target: order inside the bar is unknown
+    b = bars_from([[100, 100, 100, 100], [100, 102, 98.9, 99.5], [99.5, 99.8, 99.2, 99.6]])
+    sig = Signal(bar=0, side=1, stop=97, target=101.5, entry="limit", limit_price=99)
+    t = simulate(b, [sig], ZERO_COST, max_hold=1)
+    assert t.iloc[0]["exit_reason"] != "target"
+
+
+def test_entry_open_beyond_stop_exits_at_open_not_at_stop():
+    # long, stop 98, next open gaps to 97: must not book a profit at the stop price
+    b = bars_from([[100, 100, 100, 100], [97, 97.5, 96, 97]])
+    t = simulate(b, [Signal(bar=0, side=1, stop=98, target=105)], ZERO_COST)
+    assert t.iloc[0]["exit_reason"] == "stop" and t.iloc[0]["gross_ret"] <= 0

@@ -118,9 +118,14 @@ class Gemini:
                 continue
             if r.status_code >= 400:
                 raise RuntimeError(f"{self.backend} {r.status_code}: {r.text[:400]}")
-            data = r.json()
-            text = data["candidates"][0]["content"]["parts"][-1]["text"]
-            out = json.loads(text)
+            try:
+                data = r.json()
+                out = json.loads(data["candidates"][0]["content"]["parts"][-1]["text"])
+            except (ValueError, KeyError, IndexError) as e:  # malformed/empty answer: retry, don't drop the run
+                last = f"bad response: {type(e).__name__}"
+                time.sleep(delay)
+                delay = min(delay * 2, 120)
+                continue
             usage = data.get("usageMetadata", {})
             if self.log_path:
                 self.log_path.parent.mkdir(parents=True, exist_ok=True)

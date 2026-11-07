@@ -367,6 +367,7 @@ def main():
     done = {(r["event"], r["arm"], r["run"]) for r in rows}
     jobs = [j for j in jobs if (j[0]["trigger_time"], j[1], j[2]) not in done]
     print(f"{len(rows)} runs already done, {len(jobs)} to go", flush=True)
+    failed = 0
     with ThreadPoolExecutor(args.workers) as ex:
         futs = {ex.submit(run_one, e, bars, arm, i, None if arm in ("rsi_rule", "rule_stop", "rule_randveto") else llm): (e, arm, i)
                 for e, arm, i in jobs}
@@ -376,6 +377,7 @@ def main():
             except Exception as exc:  # one failed run must not kill the batch
                 e, arm, i = futs[f]
                 print(f"FAILED {e['trigger_time']} {arm} #{i}: {str(exc)[:200]}", flush=True)
+                failed += 1
                 continue
             rows.append(r)
             with done_path.open("a") as fh:
@@ -386,6 +388,8 @@ def main():
 
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     (LOG_DIR / f"runs_{tag}.json").write_text(json.dumps(rows, ensure_ascii=False, indent=1, default=str))
+    if failed:  # a summary over fewer runs than planned would be silently biased
+        raise SystemExit(f"{failed} runs failed; results NOT written. Re-run the same command to resume.")
     summary = summarise(rows)
     print(json.dumps(summary, indent=1))
     if not args.pilot:
