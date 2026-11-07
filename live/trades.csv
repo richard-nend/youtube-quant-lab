@@ -1,0 +1,2 @@
+key,symbol,candidate,side,signal_time,entry_time,exit_time,entry_type,entry_px,exit_px,exit_reason,gross_ret,cost,net_ret,risk,open,late,veto_multi,veto_en
+BTCUSDT|FVG-1h|2026-11-07T08:00:00+00:00,BTCUSDT,FVG-1h,1,2026-11-07 08:00:00+00:00,2026-11-07 09:00:00+00:00,2026-11-07 09:00:00+00:00,maker,76050.2,76015.5,time,-0.0004562775640300366,0.00085,-0.0013062775640300364,0.0011597602636153105,True,False,False,False
