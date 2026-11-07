@@ -31,7 +31,7 @@ from quant_lab.data import binance
 from quant_lab.engine.backtest import Signal, simulate
 from quant_lab.engine.costs import CostModel
 from quant_lab.metrics import equity_curve, summarize
-from quant_lab.results import write_result
+from quant_lab.results import ohlc_rows, write_result
 
 START, END = "2025-11-01", "2026-10-31"
 Z_MIN, BODY_ATR, ZWIN = 2.5, 0.25, 288
@@ -84,6 +84,37 @@ def signals(b: pd.DataFrame):
     return absorb, v1, v2, v4, skipped_cost
 
 
+N_EXAMPLES, PRE, POST = 3, 12, 24
+
+
+def absorption_charts(b: pd.DataFrame, absorb, v1_trades: pd.DataFrame) -> dict:
+    """Event timestamps + 5m candle windows around the FIRST N_EXAMPLES events of the year
+    (chronological, not chosen by outcome). Video only; no effect on the numbers above."""
+    o, c = b.open.to_numpy(), b.close.to_numpy()
+    a = atr(b).to_numpy()
+    delta = (2 * b.taker_buy_volume - b.volume)
+    z = ((delta - delta.rolling(ZWIN).mean()) / delta.rolling(ZWIN).std()).to_numpy()
+    events = {"t": [b.index[i].isoformat() for i in absorb],
+              "z": [round(float(z[i]), 2) for i in absorb],
+              "body_over_atr": [round(float(abs(c[i] - o[i]) / a[i]), 3) for i in absorb]}
+    v1_by_sig = v1_trades.set_index("signal_time") if not v1_trades.empty else None
+    ex = []
+    for i in absorb[:N_EXAMPLES]:
+        s0 = max(i - PRE, 0)
+        tr = None
+        if v1_by_sig is not None and b.index[i] in v1_by_sig.index:
+            r = v1_by_sig.loc[b.index[i]]
+            tr = {"fill_i": int(b.index.get_loc(r.entry_time) - s0), "exit_i": int(b.index.get_loc(r.exit_time) - s0),
+                  "entry_px": round(float(r.entry_px), 2), "exit_px": round(float(r.exit_px), 2),
+                  "exit_reason": r.exit_reason, "net_ret": round(float(r.net_ret), 6)}
+        ex.append({"event_i": int(i - s0), "z": round(float(z[i]), 2), "fade_side": -1 if z[i] > 0 else 1,
+                   "atr": round(float(a[i]), 2), "v1_trade": tr,
+                   "bars": ohlc_rows(b, s0, i + POST + 1, extra={"delta": delta.to_numpy(), "z": np.nan_to_num(z)})})
+    return {"absorption_events": events,
+            "examples_how_chosen": f"first {N_EXAMPLES} absorption events of the year (chronological, not chosen by outcome)",
+            "examples": ex}
+
+
 def main():
     b = binance.klines("BTCUSDT", "5m", START, END, market="um")
     absorb, v1, v2, v4, skipped_cost = signals(b)
@@ -119,6 +150,8 @@ def main():
         }
         print("adverse selection:", results["adverse_selection"])
 
+    results["charts"] = absorption_charts(b, absorb, runs["V1_taker"])
+    assert len(results["charts"]["absorption_events"]["t"]) == results["absorption_events"]
     write_result("ep06", "absorption_bot_backtest", results,
                  params={"symbol": "BTCUSDT", "interval": "5m", "range": [START, END], "z_min": Z_MIN,
                          "body_atr": BODY_ATR, "tp_atr": TP_ATR, "sl_atr": SL_ATR, "hold_bars": HOLD,

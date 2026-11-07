@@ -11,10 +11,10 @@ import numpy as np
 import pandas as pd
 
 from quant_lab.data import binance
-from quant_lab.engine.backtest import Signal
+from quant_lab.engine.backtest import Signal, simulate
 from quant_lab.engine.costs import CostModel
 from quant_lab.protocol import run_sets, verdict
-from quant_lab.results import write_result
+from quant_lab.results import ohlc_rows, write_result
 
 COSTS = CostModel()
 DON, ZWIN, Z_TH = 20, 720, 1.0
@@ -30,7 +30,7 @@ def atr(b, n=14):
     return tr.ewm(alpha=1 / n, adjust=False).mean()
 
 
-def breakout_signals(b: pd.DataFrame, mode: str) -> list[Signal]:
+def features(b: pd.DataFrame):
     c = b.close.to_numpy()
     a = atr(b).to_numpy()
     up = b.high.rolling(DON).max().shift(1).to_numpy()     # previous 20 bars only
@@ -38,6 +38,11 @@ def breakout_signals(b: pd.DataFrame, mode: str) -> list[Signal]:
     delta = 2 * b.taker_buy_volume - b.volume
     past = delta.shift(1).rolling(ZWIN)
     z = ((delta - past.mean()) / past.std()).to_numpy()
+    return c, a, up, dn, delta.to_numpy(), z
+
+
+def breakout_signals(b: pd.DataFrame, mode: str) -> list[Signal]:
+    c, a, up, dn, _, z = features(b)
     sigs = []
     for i in range(ZWIN + 1, len(b)):
         side = 1 if c[i] > up[i] else (-1 if c[i] < dn[i] else 0)
@@ -49,6 +54,33 @@ def breakout_signals(b: pd.DataFrame, mode: str) -> list[Signal]:
             continue
         sigs.append(Signal(bar=i, side=side, stop=c[i] - side * SL_ATR * a[i], target=c[i] + side * TP_ATR * a[i]))
     return sigs
+
+
+def t1_example(b: pd.DataFrame, start: pd.Timestamp, expected_trades: int) -> dict:
+    """1h candles around the chronologically FIRST T1 trade on the set (not chosen by outcome)."""
+    c, a, up, dn, delta, z = features(b)
+    sigs = [s for s in breakout_signals(b, "T1") if b.index[s.bar] >= start]
+    t = simulate(b, sigs, COSTS, **SIM)
+    assert len(t) == expected_trades
+    first = t.iloc[0]
+    sb, fb, xb = (b.index.get_loc(first[k]) for k in ("signal_time", "entry_time", "exit_time"))
+    s0, e0 = max(sb - 30, 0), min(xb + 7, len(b))
+    sg = next(s for s in sigs if s.bar == sb)
+    # every breakout bar in the window (T0), with whether the delta filter T1 lets it through
+    brk = []
+    for i in range(s0, e0):
+        side = 1 if c[i] > up[i] else (-1 if c[i] < dn[i] else 0)
+        if side and not np.isnan(z[i]):
+            brk.append({"i": i - s0, "side": side, "z": round(float(z[i]), 2), "t1_pass": bool(side * z[i] >= Z_TH)})
+    return {"how_chosen": "chronologically first T1 trade in the set (not chosen by outcome)",
+            "side": int(first.side), "signal_i": sb - s0, "fill_i": fb - s0, "exit_i": xb - s0,
+            "entry_px": round(float(first.entry_px), 2), "stop": round(float(sg.stop), 2),
+            "target": round(float(sg.target), 2), "exit_px": round(float(first.exit_px), 2),
+            "exit_reason": first.exit_reason, "net_ret": round(float(first.net_ret), 6),
+            "donchian_up": [None if np.isnan(up[i]) else round(float(up[i]), 2) for i in range(s0, e0)],
+            "donchian_dn": [None if np.isnan(dn[i]) else round(float(dn[i]), 2) for i in range(s0, e0)],
+            "breakouts": brk,
+            "bars": ohlc_rows(b, s0, e0, extra={"delta": delta, "z": np.nan_to_num(z)})}
 
 
 def main():
@@ -72,6 +104,8 @@ def main():
             f"{k}: n={v['trades']:>4} win={v.get('win_rate', 0):.1%} exp={v.get('expectancy', 0):+.3%} "
             f"pre={v.get('expectancy_before_costs', 0):+.3%} ci=[{v.get('ci95', [0, 0])[0]:+.3%},{v.get('ci95', [0, 0])[1]:+.3%}]"
             for k, v in res.items() if k != "verdict"), flush=True)
+    out["charts"] = {f"t1_first_trade_{k}": t1_example(sets[k], pd.Timestamp(SETS[k][1], tz=sets[k].index.tz),
+                                                       out["T1"][k]["trades"]) for k in ("BTC-D", "BTC-H")}
     write_result("ep06", "flow_confirmed_breakout", out,
                  params={"sets": SETS, "donchian": DON, "z_window": ZWIN, "z_threshold": Z_TH, "sl_atr": SL_ATR,
                          "tp_atr": TP_ATR, "max_hold": HOLD, "costs": COSTS.as_dict(),

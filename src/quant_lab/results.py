@@ -30,6 +30,23 @@ def _clean(x):
     return x
 
 
+def ohlc_rows(b, s: int, e: int, nd: int = 2, extra: dict | None = None) -> list[dict]:
+    """Bars b.iloc[s:e] as compact chart rows {t,o,h,l,c[,extra...]} (video charts only).
+
+    extra: name -> array aligned with b (e.g. per-bar taker delta), rounded to nd decimals.
+    """
+    s, e = max(int(s), 0), min(int(e), len(b))
+    rows = []
+    for i in range(s, e):
+        r = b.iloc[i]
+        row = {"t": b.index[i].isoformat(), "o": round(float(r.open), nd), "h": round(float(r.high), nd),
+               "l": round(float(r.low), nd), "c": round(float(r.close), nd)}
+        for k, arr in (extra or {}).items():
+            row[k] = round(float(arr[i]), nd)
+        rows.append(row)
+    return rows
+
+
 def write_result(episode: str, key: str, values: dict, *, params: dict, seed: int | None = None,
                  sources: list[str] | None = None, note: str = "") -> Path:
     path = RESULTS_DIR / f"{episode}.json"

@@ -12,7 +12,7 @@ from __future__ import annotations
 import pandas as pd
 
 from quant_lab.data import binance
-from quant_lab.results import write_result
+from quant_lab.results import ohlc_rows, write_result
 
 WINDOWS = {
     "luna_2022_05": ("2022-05-05", "2022-05-15"),
@@ -40,6 +40,25 @@ def worst_window_drop(bars_1m: pd.DataFrame, minutes: int) -> dict:
     return {"drop_pct": float(drop.min()), "from": str(t), "high": float(bars_1m.loc[t, "high"])}
 
 
+def charts(b15: pd.DataFrame, r: dict) -> dict:
+    """15m candles around the measured events (video only; no effect on the numbers above)."""
+    st = r["longest_red_streak_15m"]
+    i0, i1 = b15.index.get_loc(pd.Timestamp(st["start"])), b15.index.get_loc(pd.Timestamp(st["end"]))
+    assert i1 - i0 + 1 == st["length"]
+    pad = 8
+    streak = {"streak_start_i": pad if i0 >= pad else i0, "streak_len": st["length"],
+              "bars": ohlc_rows(b15, i0 - pad, i1 + 1 + pad)}
+    # worst 2h drop: 1m peak at `from`; show the 15m bars from 2h before to 4h after it
+    t0 = pd.Timestamp(r["worst_2h_drop"]["from"])
+    k = b15.index.searchsorted(t0, side="right") - 1          # 15m bar containing the 1m peak
+    s = max(k - 8, 0)
+    two_h = {"peak_time_1m": r["worst_2h_drop"]["from"], "peak_high_1m": r["worst_2h_drop"]["high"],
+             "drop_pct": r["worst_2h_drop"]["drop_pct"], "peak_bar_i": int(k - s), "window_bars": 8,
+             "bars": ohlc_rows(b15, s, k + 17)}
+    hourly = b15.resample("1h").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
+    return {"red_streak_15m": streak, "worst_2h_15m": two_h, "whole_window_1h": ohlc_rows(hourly, 0, len(hourly))}
+
+
 def main():
     out = {}
     for name, (s, e) in WINDOWS.items():
@@ -52,6 +71,7 @@ def main():
             "window_high_to_low": float(b1["low"].min() / b1["high"].max() - 1),
         }
         print(name, out[name])
+        out[name]["charts"] = charts(b15, out[name])
     print("wrote", write_result("ep04", "blackswan_scanner", out,
                                 params={"symbol": "BTCUSDT", "market": "spot", "windows": WINDOWS}))
 

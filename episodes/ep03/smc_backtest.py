@@ -30,7 +30,7 @@ from quant_lab.data import binance
 from quant_lab.engine.backtest import Signal, simulate
 from quant_lab.engine.costs import CostModel
 from quant_lab.metrics import summarize
-from quant_lab.results import write_result
+from quant_lab.results import ohlc_rows, write_result
 
 START, END = "2025-11-01", "2026-10-31"
 RR = 3.0
@@ -170,6 +170,64 @@ def run(b: pd.DataFrame, sigs) -> dict:
     return s
 
 
+def sweep_bar(i, side, l, h, c, last_sl, last_sh):
+    """Bar of a sweep of the last confirmed swing low (long) / high (short) within the lookback, else None."""
+    for j in range(max(i - SWEEP_LOOKBACK, 1), i + 1):
+        if side > 0 and not np.isnan(last_sl[j - 1]) and l[j] < last_sl[j - 1] < c[j]:
+            return j
+        if side < 0 and not np.isnan(last_sh[j - 1]) and h[j] > last_sh[j - 1] > c[j]:
+            return j
+    return None
+
+
+def c1_charts(b: pd.DataFrame, fvgs, expected: dict) -> dict:
+    """Video chart data for C1_sweep (no effect on the numbers above).
+
+    Example = the chronologically FIRST C1_sweep signal that actually filled (not picked by outcome).
+    """
+    l, h, c = b.low.to_numpy(), b.high.to_numpy(), b.close.to_numpy()
+    last_sh, last_sl, last_sl_bar = confirmed_swings(b)
+    pool = [(z, sweep_bar(z["bar"], z["side"], l, h, c, last_sl, last_sh)) for z in fvgs]
+    pool = [(z, j) for z, j in pool if j is not None]
+    sig_z = [(z, j, s) for z, j in pool if (s := fvg_signal(z, l, h))]
+    assert len(sig_z) == expected["signals"], (len(sig_z), expected["signals"])
+    t = simulate(b, [s for _, _, s in sig_z], COSTS, fill="through", limit_ttl=20, max_hold=96)
+    assert len(t) == expected["trades"]
+    first = t.iloc[0]
+    sbar = b.index.get_loc(first.signal_time)
+    z, j, sg = next(x for x in sig_z if x[0]["bar"] == sbar)
+    fill_i, exit_i = b.index.get_loc(first.entry_time), b.index.get_loc(first.exit_time)
+    side = z["side"]
+    swing_level = float(last_sl[j - 1] if side > 0 else last_sh[j - 1])
+    pivot = int(last_sl_bar[j - 1]) if side > 0 else None
+    s = min(pivot if pivot is not None and pivot >= 0 else j, j) - 8
+    e = exit_i + 7
+    rel = lambda x: int(x - s)
+    example = {
+        "how_chosen": "chronologically first C1_sweep signal that filled in the 1-year run (not chosen by outcome)",
+        "side": side,
+        "swing_pivot_i": rel(pivot) if pivot is not None else None,
+        "swing_confirmed_i": rel(pivot + SWING) if pivot is not None else None,
+        "swing_level": round(swing_level, 2),
+        "sweep_i": rel(j), "displacement_i": rel(z["disp"]), "fvg_confirmed_i": rel(z["bar"]),
+        "fvg_edge": round(float(z["edge"]), 2), "fvg_far": round(float(z["far"]), 2),
+        "entry": round(float(sg.limit_price), 2), "stop": round(float(sg.stop), 2), "target": round(float(sg.target), 2),
+        "fill_i": rel(fill_i), "exit_i": rel(exit_i), "exit_px": round(float(first.exit_px), 2),
+        "exit_reason": first.exit_reason, "net_ret": round(float(first.net_ret), 6),
+        "r_multiple": round(float(first.r_multiple), 3),
+        "bars": ohlc_rows(b, s, e),
+    }
+    day = lambda ts: ts.strftime("%Y-%m-%d")
+    days = pd.date_range(b.index[0].normalize(), b.index[-1].normalize(), freq="D")
+    sig_days = pd.Series([day(b.index[z["bar"]]) for z, _, _ in sig_z]).value_counts()
+    fill_days = t["entry_time"].map(day).value_counts()
+    daily = {"dates": [day(d) for d in days],
+             "signals": [int(sig_days.get(day(d), 0)) for d in days],
+             "fills": [int(fill_days.get(day(d), 0)) for d in days]}
+    assert sum(daily["signals"]) == expected["signals"] and sum(daily["fills"]) == expected["trades"]
+    return {"c1_first_fill_example": example, "c1_daily_counts": daily}
+
+
 def build(b: pd.DataFrame):
     """Causal FVGs, OBs and the cumulative filter steps for bars b."""
     l, h, o, c = b.low.to_numpy(), b.high.to_numpy(), b.open.to_numpy(), b.close.to_numpy()
@@ -186,14 +244,7 @@ def build(b: pd.DataFrame):
 
     # --- filter predicates (evaluated only with information available at z["bar"]) ---
     def swept(z):
-        """a sweep of the last confirmed swing low (long) / high (short) within the lookback"""
-        i = z["bar"]
-        for j in range(max(i - SWEEP_LOOKBACK, 1), i + 1):
-            if z["side"] > 0 and not np.isnan(last_sl[j - 1]) and l[j] < last_sl[j - 1] < c[j]:
-                return j
-            if z["side"] < 0 and not np.isnan(last_sh[j - 1]) and h[j] > last_sh[j - 1] > c[j]:
-                return j
-        return None
+        return sweep_bar(z["bar"], z["side"], l, h, c, last_sl, last_sh)
 
     def displacement(z):
         d = z["disp"]
@@ -266,6 +317,8 @@ def main():
             continue
         print(f"{k:22} {s['trades']:>6} {s['win_rate']:>6.1%} {s['avg_r_win'] or 0:>7.2f} {s['expectancy_r']:>6.2f} "
               f"{s['total_return']:>9.1%} {s['total_return_before_costs']:>8.1%} {s['max_drawdown']:>7.1%}")
+
+    results["charts"] = c1_charts(b, fvgs, results["C1_sweep"])
 
     write_result("ep03", "smc_backtest", results,
                  params={"symbol": "BTCUSDT", "interval": "15m", "range": [START, END], "rr": RR, "swing": SWING,

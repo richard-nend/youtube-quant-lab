@@ -357,6 +357,29 @@ def analyze(run_dir: Path) -> None:
                   "(contamination probe); Mar-Oct 2025 is therefore not a clean out-of-sample period. "
                   "8 monthly decisions only -> no statistical power.",
     }
+    # ---- chart data for the video (rebuilt from the saved run + Yahoo closes; no LLM calls) ----
+    common = eq.index.intersection(closes.index)
+    assert common[0] == eq.index[0] == closes.index[0] and common[-1] == eq.index[-1] == closes.index[-1], \
+        (eq.index[[0, -1]], closes.index[[0, -1]])
+    spy_n = closes["SPY"] / closes["SPY"].iloc[0]
+    ag_n = eq / eq.iloc[0]
+    daily = {"dates": [d.strftime("%Y-%m-%d") for d in common],
+             "agents": [round(float(ag_n[d] - 1), 5) for d in common],
+             "buy_hold_eqw": [round(float(bh[d] - 1), 5) for d in common],
+             "spy": [round(float(spy_n[d] - 1), 5) for d in common]}
+    for k, ref in (("agents", c["strategy_total_return"]), ("buy_hold_eqw", c["buy_hold_eqw_total_return"]),
+                   ("spy", c["spy_total_return"])):
+        assert abs(daily[k][-1] - ref) < 1e-5, (k, daily[k][-1], ref)
+    if "Net Exposure" in pv:
+        ne = (pv["Net Exposure"].astype(float) / pv["Portfolio Value"].astype(float))
+        ne = ne[~ne.index.duplicated(keep="last")]
+        daily["agents_net_exposure_frac"] = [round(float(ne[d]), 4) for d in common]
+    charts = {
+        "daily_curves": daily,
+        "decision_cells": [{"date": r.date, "ticker": r.ticker, "pm_action": r.pm_action, "pm_qty": int(r.pm_qty),
+                            "net_persona": round(float(r.net_persona), 4), "n_bull": int(r.n_bull), "n_bear": int(r.n_bear)}
+                           for r in cells.itertuples()],
+    }
     values = {
         "data_substituted": True,
         "substitution_doc": "quant_lab/vendor/ai-hedge-fund-legacy/DATA_SUBSTITUTIONS.md",
@@ -368,6 +391,7 @@ def analyze(run_dir: Path) -> None:
         "c_backtest": c,
         "signal_mix": mix,
         "rebalance_dates": [r["date"] for r in runs],
+        "charts": charts,
     }
     print(json.dumps({k: values[k] for k in ("llm_calls", "llm_fallbacks_to_default")}, indent=1))
     print(json.dumps({k: v for k, v in values["a_persona_agreement"].items() if k != "pairs"}, indent=1))
