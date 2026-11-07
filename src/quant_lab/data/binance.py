@@ -79,8 +79,8 @@ def _read_zip_csv(path: Path, columns: list[str]) -> pd.DataFrame:
 def _to_utc(ts: pd.Series) -> pd.Series:
     """Binance switched spot files to microseconds in 2025; normalise both units."""
     ts = pd.to_numeric(ts)
-    unit = "us" if ts.iloc[0] > 10**14 else "ms"
-    return pd.to_datetime(ts, unit=unit, utc=True)
+    # per row: a range spanning 2024 (ms) and 2025 (us) files mixes both units in one column
+    return pd.to_datetime(ts.where(ts > 10**14, ts * 1000), unit="us", utc=True)
 
 
 def _months(start: date, end: date):

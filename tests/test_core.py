@@ -70,3 +70,21 @@ def test_entry_open_beyond_stop_exits_at_open_not_at_stop():
     b = bars_from([[100, 100, 100, 100], [97, 97.5, 96, 97]])
     t = simulate(b, [Signal(bar=0, side=1, stop=98, target=105)], ZERO_COST)
     assert t.iloc[0]["exit_reason"] == "stop" and t.iloc[0]["gross_ret"] <= 0
+
+
+def test_to_utc_handles_mixed_ms_and_us_rows():
+    import pandas as pd
+    from quant_lab.data.binance import _to_utc
+    ms = 1735689600000  # 2025-01-01T00:00Z in ms
+    out = _to_utc(pd.Series([ms - 3_600_000, ms * 1000]))
+    assert list(out) == [pd.Timestamp("2024-12-31T23:00Z"), pd.Timestamp("2025-01-01T00:00Z")]
+
+
+def test_write_result_parallel_writers_keep_both_keys(tmp_path, monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    import json
+    import quant_lab.results as res
+    monkeypatch.setattr(res, "RESULTS_DIR", tmp_path)
+    with ThreadPoolExecutor(8) as ex:
+        list(ex.map(lambda k: res.write_result("epx", f"k{k}", {"v": k}, params={}, sources=[]), range(16)))
+    assert len(json.loads((tmp_path / "epx.json").read_text())["experiments"]) == 16

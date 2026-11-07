@@ -6,8 +6,10 @@ when it ran. A number without an entry here must not appear in narration.
 
 from __future__ import annotations
 
+import fcntl
 import json
 import math
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -51,7 +53,18 @@ def write_result(episode: str, key: str, values: dict, *, params: dict, seed: in
                  sources: list[str] | None = None, note: str = "") -> Path:
     path = RESULTS_DIR / f"{episode}.json"
     path.parent.mkdir(parents=True, exist_ok=True)
-    doc = json.loads(path.read_text()) if path.exists() else {"episode": episode, "experiments": {}}
+    # two experiments of one episode can finish at once: lock the read-modify-write, then replace atomically
+    with open(path.with_suffix(".lock"), "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        doc = json.loads(path.read_text()) if path.exists() else {"episode": episode, "experiments": {}}
+        _merge(doc, key, values, params, seed, sources, note)
+        tmp = path.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(doc, ensure_ascii=False, indent=2) + "\n")
+        os.replace(tmp, path)
+    return path
+
+
+def _merge(doc, key, values, params, seed, sources, note):
     script = Path(sys.argv[0]).resolve()
     try:
         script_rel = str(script.relative_to(PROJECT_ROOT))
@@ -68,5 +81,4 @@ def write_result(episode: str, key: str, values: dict, *, params: dict, seed: in
             "note": note,
         },
     })
-    path.write_text(json.dumps(doc, ensure_ascii=False, indent=2) + "\n")
-    return path
+
