@@ -92,6 +92,39 @@ The checks are fixed here; the thresholds are rules of thumb, stated as such on 
 
 Report card rows: the EP01 HA fills, EP01 repainting pivots, EP03 B/C5/cost-aware, EP06 V1/V4/T0/T1.
 
+## H-EP07: overfitting, the zero-fee illusion, and walk-forward (written 2026-11-07, before any EP07 code was run)
+
+EP07 asks how much of a "best backtest" is the search itself. Its own periods (not the BTC-D/BTC-H sets above):
+`IS` = BTCUSDT perp 1h, 2024-11-01 → 2025-10-31 (optimise here); `OOS` = 2025-11-01 → 2026-10-31 (the year after).
+
+- **Strategy family (fixed grid)**: 1h moving-average cross, long and short.
+  - Signal on the bar where sign(SMA_fast − SMA_slow) changes; market entry at the next open.
+  - Stop k × ATR14, target r × k × ATR14, max hold 48 bars. One position at a time (engine default).
+  - fast ∈ {5, 10, 15, 20, 30, 40, 50}, slow ∈ {20, 30, 50, 80, 120, 160, 200} with fast < slow,
+    k ∈ {1, 1.5, 2, 3}, r ∈ {1, 2, 3}. Every combination is run; the count is reported.
+  - Selection score: sum of per-trade net returns (fixed notional), combos with < 30 trades excluded.
+- **E1, the illusion**: pick the best combo on IS with zero costs. Report it on IS with zero costs,
+  on IS with real costs, and on OOS with real costs. Also the share of all combos with positive sum,
+  zero vs real costs.
+- **E2, selection bias (permutation test)**: 200 synthetic IS years. Each one shuffles whole IS bars
+  (open/high/low/close relative to the previous close, with taker volume) and rebuilds prices from the first close.
+  Seed 20261107. The same grid runs on each; the best zero-cost score per synthetic year gives a noise distribution.
+  p = share of synthetic bests ≥ the real IS best.
+- **E3, the answer: walk-forward**.
+  - Months 2023-11 … 2026-10 (36 months), BTCUSDT and ETHUSDT perp 1h, data from 2022-11-01.
+  - At the start of each month, pick the best combo by real-cost score over the previous 12 months.
+    It must have ≥ 30 trades there; if none qualifies, sit out.
+  - Trade that month with it. Only signals inside the month are taken; an open trade may exit after month end.
+  - Report the concatenated out-of-sample trades and the mean in-sample score of the chosen combos per trade,
+    compared with the realised one ("decay").
+- **Hypotheses (predictions, reported whether right or wrong)**:
+  - (a) E1: the zero-cost IS best has net expectancy ≤ 0 on OOS with real costs.
+  - (b) E2: p > 0.05, i.e. the real IS best is not unusual against the best of the same grid on shuffled prices.
+  - (c) E3 verdict: `PASS` if the walk-forward net expectancy > 0 on BTC and ETH, each with ≥ 100 trades;
+    `WEAK` if BTC only; else `FAIL`. Bootstrap CI as above.
+- **Engine note**: market entries only, so the same-bar limit-fill issue does not apply.
+  Trades where the entry open is already beyond the stop are counted and reported.
+
 ## Amendments
 
 1. **2026-11-06, after running H-EP03 / H-EP06: what "net expectancy" means.**
