@@ -166,6 +166,43 @@ Engine fix first (commit before this one): limit fills no longer count a same-ba
     and both versions are reported.
   - Reported monthly in EP08 onward, whatever it shows.
 
+## H-EP08: a fine-tuned Laya brake trained on trade outcomes (meta-labeling) (written 2026-11-14, before any EP08 code on real labels was run)
+
+EP07's general-purpose Laya brake failed: on BTC it blocked 18.6% of L1 entries, the blocked entries averaged +0.32% vs +0.07% for kept ones,
+and final equity fell from 1.874x (L1) to 1.355x (L2), below the random-veto median. Live, both Laya brakes have blocked 0 of 10 entries so far.
+EP08 asks one question: if Laya is fine-tuned on whether past L1 trades lost, does it pass the same brake tests EP07 failed?
+The only code run before this entry is `episodes/ep08/smoke_train.py`: EP07 states with random labels, to check the training format and time.
+
+- **Data**: EP07's L1 trades for BTCUSDT and ETHUSDT (36 months, 662 + 1,027 trades), unchanged.
+  - States and the EP07 Laya answers come from `runs/ep07_laya_answers.jsonl`, joined to `episodes/ep07/l1_split.py` `l1_trades(sym)`
+    on key `sym|candidate|signal_time`. The join must be one-to-one. No EP07 or live file is modified.
+  - Label: `1` (should have been blocked) if the trade's net return ≤ 0, else `0`.
+- **Folds (expanding window)**: test windows start 2024-11-01, 2025-05-01, 2025-11-01, 2026-05-01 (UTC), each 6 months;
+  the last ends 2026-11-01 (exclusive).
+  - Train = trades whose exit time is before the test start (purged). Test = trades whose signal time is inside the test window.
+  - The whole test span (2024-11 … 2026-10) overlaps the period used to design the candidates (Amendment 3). This is stated in the video.
+- **Models**, trained once per fold on BTC and ETH together (the state has no ticker, date or price):
+  - `laya_ft`: base `convaiinnovations/laya-multilingual` rev 1720e3e3 (`vendor/laya/model`), `laya` 0.4.22,
+    `laya-train --epochs 3 --freeze-encoder --seed 20261113 --device cpu`, other options at their defaults.
+    Same question as EP07 ("Should this trade entry be blocked because conditions are dangerous for it?"). Veto if noul ≥ 0.5.
+  - `logistic` (simple-model control): scikit-learn 1.5.2 `LogisticRegression(C=1.0, max_iter=2000)` on the same information:
+    the six numeric state fields (missing → train-window median, standardized with train-window statistics) plus strategy and side as 0/1.
+    It vetoes the same share of each symbol's test trades as `laya_ft` did, taking its highest probabilities.
+  - `random` control: veto at `laya_ft`'s observed rate per symbol, 1,000 runs, `numpy.random.default_rng(20261113)`, BTC then ETH.
+  - `laya_generic`: EP07's cached answers on the same test trades, reported for reference.
+- **Measures**: per symbol, on the concatenated test trades in entry-time order. Net expectancy (fixed notional) with bootstrap CI,
+  max drawdown, worst month and final equity as in EP07. Also reported: veto rate, mean net return of vetoed vs kept trades,
+  and `laya_ft`'s percentile among the 1,000 random runs.
+- **Hypotheses (predictions)**, per symbol:
+  - (b) `laya_ft` max drawdown and worst month are smaller in size than L1's and than the random-veto medians (EP07 (b)).
+  - (c) `laya_ft` net expectancy > random-veto median expectancy (EP07 (c)).
+  - (e) `laya_ft` net expectancy > `logistic` net expectancy.
+  - Ties count as not met. A symbol with fewer than 100 kept trades is `insufficient` and fails.
+- **Verdict**: `PASS` = (b), (c) and (e) on both BTC and ETH. `WEAK` = all three on BTC only. `FAIL` otherwise. Reported whatever it shows.
+- **Check, not a verdict**: re-scoring EP07's `laya_generic` over all 36 months must reproduce EP07's BTC L2 final equity (1.35492).
+- **Live**: no change to the live runner. If the verdict is PASS or WEAK, adding the fine-tuned brake as a live track needs a
+  separate amendment written before it runs.
+
 ## Amendments
 
 1. **2026-11-06, after running H-EP03 / H-EP06: what "net expectancy" means.**
