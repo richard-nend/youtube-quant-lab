@@ -91,6 +91,7 @@ def main() -> None:
     corr = {c: float(pd.Series(test.p.to_numpy()).corr(xt[c].reset_index(drop=True), method="spearman"))
             for c in xt.columns if xt[c].nunique() > 1}
     rep["laya_score_spearman_top"] = {k: round(v, 3) for k, v in sorted(corr.items(), key=lambda kv: -abs(kv[1]))[:8]}
+    rep["laya_score_spearman_all"] = {k: round(v, 3) for k, v in sorted(corr.items(), key=lambda kv: -abs(kv[1]))}
 
     # 5. what the logistic weighs (last fold's model, standardized coefficients; + = more likely to lose)
     tr = rows[rows.exit_time < ml.FOLD_STARTS[-1]]
