@@ -99,6 +99,9 @@ def main() -> None:
     coef = dict(zip(xtr.columns, m.coef_[0]))
     rep["logit_coef_last_fold_top"] = {k: round(float(v), 3) for k, v in sorted(coef.items(), key=lambda kv: -abs(kv[1]))[:8]}
 
+    from quant_lab.results import write_result
+    write_result("ep08", "meta_label_explore_b", rep,
+                 params={"status": "exploratory, written after the H-EP08b verdict", "n_boot": N_BOOT}, seed=mlb.SEED)
     out = mlb.RUNS / "explore_b.json"
     out.write_text(json.dumps(rep, indent=1, ensure_ascii=False))
     print(json.dumps(rep, ensure_ascii=False, indent=1))
