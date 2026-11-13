@@ -203,6 +203,50 @@ The only code run before this entry is `episodes/ep08/smoke_train.py`: EP07 stat
 - **Live**: no change to the live runner. If the verdict is PASS or WEAK, adding the fine-tuned brake as a live track needs a
   separate amendment written before it runs.
 
+## H-EP08b: the same question with Laya used as its documentation advises (written 2026-11-14, after H-EP08's result, before any H-EP08b model was trained)
+
+H-EP08 returned FAIL (commit 48aad8c evaluation; `src/data/results/ep08.json`). It stays FAIL. Looking at why, after the result:
+the run did not use Laya the way its own README says to, so it cannot answer "does a properly used Laya brake work?".
+This is a second, separately registered attempt on data we have now seen. It is labelled as such everywhere,
+and only the live paper test can give a truly unseen check.
+
+- **What the post-result diagnosis found** (exploratory, not evidence by itself):
+  - Wrong checkpoint for English input: the state is English, and Laya's own Router sends English to `laya` (ModernBERT-large),
+    not `laya-multilingual` (README "Why Route": English intent 0.783 vs 0.657).
+  - Too little training: the encoder was frozen and the heads got 24–54 updates. The README calls Laya "a fast base to specialise,
+    not a zero-shot decision engine"; its recipe trains the whole model (RLCD, 4 epochs).
+  - The 0.5 cut-off did not work with the output: temperature calibration hit its upper clamp (5), all scores fell in 0.43–0.60,
+    and whole folds flipped between vetoing 0% and 100%. Within folds the ranking had no skill (AUC 0.47).
+  - Thin state: six market numbers, each with AUC 0.47–0.51 against the label; no timeframe, stop distance or entry type.
+  - Correction to an earlier internal note: the engine's `cost` depends on how a trade ends (target = maker, stop/time = taker),
+    so cost/risk built from it leaks the outcome (AUC 0.75). Built from ex-ante costs it has AUC 0.533. Only ex-ante costs are used below.
+- **Same as H-EP08**: L1 test trades and folds (test windows from 2024-11-01, 2025-05-01, 2025-11-01, 2026-05-01, 6 months each,
+  last end 2026-11-01 exclusive; train = trades closed before the test start), label (net return ≤ 0 → 1), costs, seed 20261113,
+  measures, and the overlap disclosure (the whole test span overlaps the candidates' design period).
+- **Changes** (code: `episodes/ep08/meta_label_b.py`, Kaggle notebook `episodes/ep08/kaggle_train_b.py`):
+  - Checkpoint: `convaiinnovations/laya` rev 7b928d82 (sha256 of model.safetensors starts 891102d372688fc2), `laya` 0.4.22.
+  - Training: whole model (encoder not frozen), `laya-train --epochs 4 --seed 20261113 --device cuda`, other options at
+    their defaults (micro-batch 8, grad-accum 8, RLCD loss), on a Kaggle T4 GPU.
+  - Training pool: every trade of all four candidates (L0), not only L1, purged the same way: 3,248 / 4,129 / 5,009 / 5,844 rows.
+  - State: English sentences with everything known at the signal bar and no ticker, date or price level:
+    strategy and timeframe, side, entry order type, stop and target distance (%), reward-to-risk, ex-ante round-trip cost and
+    cost as a share of the stop, maximum hold; 24 h / 7 d / 30 d returns, ATR % and its 90-day percentile, distance from the
+    200-bar average and the 20-day high/low, the signal bar's aggressive-buying z-score; the strategy's last 20 closed trades
+    (win rate, mean net) and its trailing-12-month net sum and trade count; UTC hour and weekday.
+  - Question, phrased as the label: "Will this trade lose money after costs?" (noul).
+  - Veto rule: per symbol and fold, veto the 20% of test trades with the highest score (rounded to whole trades).
+    20% is set from EP07's observed generic veto rate (18.6%). Ranking only, so calibration does not matter.
+- **Arms**, all vetoing the same 20% per symbol and fold: `laya_ft_b`; `logistic` (scikit-learn 1.5.2
+  `LogisticRegression(C=1.0, max_iter=2000)` on the same facts as numbers: missing → train-window median, standardized
+  with train-window statistics, candidate one-hot); `cost_rule` (the highest ex-ante cost ÷ stop distance);
+  `random` (1,000 runs, `default_rng(20261113)`). `L1` (no veto) is the reference.
+- **Hypotheses**, per symbol: (b) `laya_ft_b` max drawdown and worst month smaller in size than L1's and than the random medians;
+  (c) net expectancy > random median; (e) > `logistic`; (f) > `cost_rule`. Ties count as not met.
+  Fewer than 100 kept trades → `insufficient`.
+- **Verdict**: `PASS` = (b), (c), (e) and (f) on both BTC and ETH. `WEAK` = all four on BTC only. `FAIL` otherwise.
+  Also reported: test AUC of each scorer, vetoed vs kept mean net return, and `laya_ft_b`'s percentile among the random runs.
+  Reported whatever it shows, next to H-EP08.
+
 ## Amendments
 
 1. **2026-11-06, after running H-EP03 / H-EP06: what "net expectancy" means.**

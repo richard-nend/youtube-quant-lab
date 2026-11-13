@@ -102,3 +102,34 @@ def test_verdict_insufficient_below_100_kept_trades():
 def test_loss_size_treats_gains_as_zero():
     assert ml.loss_size(-0.2) == 0.2
     assert ml.loss_size(0.05) == 0.0
+
+
+_specb = importlib.util.spec_from_file_location("meta_label_b", LAB_ROOT / "episodes/ep08/meta_label_b.py")
+mlb = importlib.util.module_from_spec(_specb)
+_specb.loader.exec_module(mlb)
+
+
+def test_recent_record_uses_only_trades_closed_before_signal():
+    t = pd.DataFrame({"exit_time": [ts("2025-01-01"), ts("2025-01-03"), ts("2025-01-05")],
+                      "net_ret": [0.01, -0.01, 0.05]})
+    wr, mean, n = mlb.recent_record(t, ts("2025-01-04"))
+    assert n == 2 and wr == 0.5 and abs(mean - 0.0) < 1e-12
+    assert mlb.recent_record(t, ts("2025-01-01")) == (None, None, 0)
+
+
+def test_exante_cost_ignores_how_the_trade_ends():
+    from quant_lab.engine.costs import CostModel
+    c = CostModel()
+    assert mlb.exante_cost("limit", c) == c.side_cost("maker") + c.side_cost("taker")
+    assert mlb.exante_cost("market", c) == 2 * c.side_cost("taker")
+
+
+def test_state_text_has_no_ticker_date_or_price():
+    x = {"long": 1.0, "limit_entry": 1.0, "stop_pct": 0.5, "target_pct": 1.5, "reward_risk": 3.0, "cost_pct": 0.085,
+         "cost_to_stop": 0.17, "max_hold_h": 96, "trail12_sum_pct": 12.3, "trail12_n": 140.0, "recent_win": 0.35,
+         "recent_mean_pct": 0.02, "hour": 13.0, "weekday": 2.0, "ret_24h_pct": 1.2, "ret_7d_pct": -3.4,
+         "ret_30d_pct": 5.6, "atr_pct": 1.1, "atr_pctile_90d": 64.0, "from_ma200_pct": 2.2,
+         "from_20d_high_pct": -4.0, "from_20d_low_pct": 9.0, "delta_z": None}
+    s = mlb.state_text(x, "FVG-1h")
+    assert "BTC" not in s and "ETH" not in s and "202" not in s
+    assert "1-hour" in s and "Wednesday" in s and "unknown" in s
