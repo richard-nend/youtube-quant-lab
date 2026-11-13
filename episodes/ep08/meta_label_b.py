@@ -182,5 +182,116 @@ def export() -> None:
     print(rows.state.iloc[0])
 
 
+N_RANDOM, MIN_KEPT = 1_000, 100
+SCORES = RUNS / "scores_b.jsonl"  # downloaded from the Kaggle kernel output
+
+
+def top_share(score, groups, share: float):
+    """Veto the top `share` of each group (fold) by score, rounded to whole trades; ties broken by position."""
+    score, groups = np.asarray(score, float), np.asarray(groups)
+    veto = np.zeros(len(score), bool)
+    for g in pd.unique(groups):
+        idx = np.flatnonzero(groups == g)
+        k = int(round(share * len(idx)))
+        veto[idx[np.argsort(-score[idx], kind="stable")[:k]]] = True
+    return veto
+
+
+def verdict_b(per_sym: dict[str, dict]) -> dict:
+    status = {s: ("insufficient" if r["kept_trades"] < MIN_KEPT else
+                  "met" if (r["b"] and r["c"] and r["e"] and r["f"]) else "not met") for s, r in per_sym.items()}
+    v = "PASS" if all(status[s] == "met" for s in SYMS) else "WEAK" if status["BTCUSDT"] == "met" else "FAIL"
+    return {"verdict": v, "per_symbol": status}
+
+
+def _x_frame(xs, med=None):
+    x = pd.DataFrame(list(xs), dtype=float)
+    med = x.median() if med is None else med
+    return x.fillna(med).fillna(0.0), med
+
+
+def logistic_scores_b(train: pd.DataFrame, test: pd.DataFrame):
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.preprocessing import StandardScaler
+
+    xtr, med = _x_frame(train.x)
+    xte, _ = _x_frame(test.x, med)
+    xte = xte[xtr.columns]
+    sc = StandardScaler().fit(xtr)
+    m = LogisticRegression(C=1.0, max_iter=2000).fit(sc.transform(xtr), train.label.to_numpy())
+    return m.predict_proba(sc.transform(xte))[:, 1]
+
+
+def evaluate_b() -> None:
+    from sklearn.metrics import roc_auc_score
+
+    from quant_lab.results import write_result
+
+    asm = ml._l1_module().asm
+    rows = pd.read_json(RUNS / "rows.jsonl", lines=True)
+    for c in ("signal_time", "entry_time", "exit_time"):
+        rows[c] = pd.to_datetime(rows[c], utc=True)
+    sc = pd.DataFrame([json.loads(l) for l in SCORES.read_text().splitlines()])
+    assert sc.key.is_unique and set(sc.fold) == {f"{s:%Y-%m}" for s in ml.FOLD_STARTS}, "all folds must be scored"
+    test = rows[rows.is_l1].merge(sc, on="key", how="inner", validate="one_to_one")
+    assert len(test) == 1156, len(test)
+    # logistic per fold, trained on the same L0 pool as Laya
+    test["p_logit"] = np.nan
+    for start, end in zip(ml.FOLD_STARTS, ml.fold_ends()):
+        tag = f"{start:%Y-%m}"
+        tr = rows[rows.exit_time < start]
+        m = test.fold == tag
+        test.loc[m, "p_logit"] = logistic_scores_b(tr, test[m])
+    test["cost_to_stop"] = [x["cost_to_stop"] for x in test.x]
+    rng = np.random.default_rng(SEED)
+    out, per_sym = {}, {}
+    for sym in SYMS:
+        t = test[test.sym == sym].sort_values("entry_time").reset_index(drop=True)
+        g = t.fold.to_numpy()
+        vetoes = {"laya_ft_b": top_share(t.p, g, VETO_SHARE), "logistic": top_share(t.p_logit, g, VETO_SHARE),
+                  "cost_rule": top_share(t.cost_to_stop, g, VETO_SHARE)}
+        arms = {"L1": ml._arm(t, asm), **{k: ml._arm(t[~v], asm) for k, v in vetoes.items()}}
+        rand = []
+        for _ in range(N_RANDOM):
+            keep = ~top_share(rng.random(len(t)), g, VETO_SHARE)
+            a = ml._arm(t[keep], asm)
+            rand.append((a["expectancy"], a["max_dd"], a["worst_month"]))
+        r = np.array(rand, float)
+        med = {"expectancy": float(np.median(r[:, 0])), "max_dd": float(np.median(r[:, 1])),
+               "worst_month": float(np.median(r[:, 2]))}
+        ft = arms["laya_ft_b"]
+        ls = ml.loss_size
+        checks = {
+            "b": bool(ls(ft["max_dd"]) < ls(arms["L1"]["max_dd"]) and ls(ft["max_dd"]) < ls(med["max_dd"])
+                      and ls(ft["worst_month"]) < ls(arms["L1"]["worst_month"]) and ls(ft["worst_month"]) < ls(med["worst_month"])),
+            "c": bool(ft["expectancy"] > med["expectancy"]),
+            "e": bool(ft["expectancy"] > arms["logistic"]["expectancy"]),
+            "f": bool(ft["expectancy"] > arms["cost_rule"]["expectancy"]),
+        }
+        per_sym[sym] = {**checks, "kept_trades": ft["trades"]}
+        v = vetoes["laya_ft_b"]
+        out[sym] = {"test_trades": len(t), "arms": arms, "random_median": med, "checks": checks,
+                    "random_rank_pct": float((r[:, 0] < ft["expectancy"]).mean()),
+                    "auc": {"laya_ft_b": float(roc_auc_score(t.label, t.p)),
+                            "logistic": float(roc_auc_score(t.label, t.p_logit)),
+                            "cost_to_stop": float(roc_auc_score(t.label, t.cost_to_stop))},
+                    "blocked_mean_net": float(t[v].net_ret.mean()), "kept_mean_net": float(t[~v].net_ret.mean()),
+                    "score_spread": {"min": float(t.p.min()), "median": float(t.p.median()), "max": float(t.p.max())}}
+        print(sym, "exp L1/ft/log/cost/randmed",
+              [round(x, 5) for x in (arms["L1"]["expectancy"], ft["expectancy"], arms["logistic"]["expectancy"],
+                                     arms["cost_rule"]["expectancy"], med["expectancy"])],
+              "auc", {k: round(a, 3) for k, a in out[sym]["auc"].items()}, checks, flush=True)
+    out.update(verdict_b(per_sym))
+    print("verdict", out["verdict"], out["per_symbol"], flush=True)
+    write_result("ep08", "meta_label_walkforward_b", out,
+                 params={"checkpoint": "convaiinnovations/laya@7b928d82 (sha256 891102d372688fc2...), laya 0.4.22",
+                         "training": "laya-train --epochs 4 --seed 20261113 --device cuda, full fine-tune, Kaggle T4",
+                         "train_pool": "all four candidates (L0), purged", "question": Q_LOSS,
+                         "veto": "top 20% per symbol and fold", "n_random": N_RANDOM,
+                         "logistic": "scikit-learn 1.5.2 LogisticRegression(C=1.0, max_iter=2000)",
+                         "preregistration": "PREREGISTRATION.md H-EP08b (commit 12a423e)"},
+                 seed=SEED)
+
+
 if __name__ == "__main__":
-    {"export": export}[sys.argv[1] if len(sys.argv) > 1 else "export"]()
+    {"export": export, "evaluate": evaluate_b}[sys.argv[1] if len(sys.argv) > 1 else "export"]()

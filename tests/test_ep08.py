@@ -133,3 +133,21 @@ def test_state_text_has_no_ticker_date_or_price():
     s = mlb.state_text(x, "FVG-1h")
     assert "BTC" not in s and "ETH" not in s and "202" not in s
     assert "1-hour" in s and "Wednesday" in s and "unknown" in s
+
+
+def _symb(b=True, c=True, e=True, f=True, kept=200):
+    return {"b": b, "c": c, "e": e, "f": f, "kept_trades": kept}
+
+
+def test_verdict_b_requires_beating_cost_rule():
+    assert mlb.verdict_b({"BTCUSDT": _symb(), "ETHUSDT": _symb()})["verdict"] == "PASS"
+    assert mlb.verdict_b({"BTCUSDT": _symb(f=False), "ETHUSDT": _symb()})["verdict"] == "FAIL"
+    assert mlb.verdict_b({"BTCUSDT": _symb(), "ETHUSDT": _symb(f=False)})["verdict"] == "WEAK"
+
+
+def test_top_share_vetoes_exact_count_per_group():
+    import numpy as np
+    score = np.array([0.1, 0.9, 0.5, 0.7, 0.2, 0.3, 0.8, 0.4, 0.6, 0.0])
+    groups = np.array(["a"] * 5 + ["b"] * 5)
+    v = mlb.top_share(score, groups, 0.2)
+    assert v.tolist() == [False, True, False, False, False, False, True, False, False, False]
