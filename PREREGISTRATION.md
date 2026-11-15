@@ -247,6 +247,44 @@ and only the live paper test can give a truly unseen check.
   Also reported: test AUC of each scorer, vetoed vs kept mean net return, and `laya_ft_b`'s percentile among the random runs.
   Reported whatever it shows, next to H-EP08.
 
+## H-EP09: a tree model on the same facts, and Laya taught with the tree's output (written 2026-11-15, before any tree model was fitted on these labels)
+
+Season 2 question (`research/SEASON2_ROADMAP.md`): does a technique's output, added to Laya's state as one paragraph,
+pick losing trades better than EP08's Laya, and better than a simple model given the same numbers?
+EP08's open objection: the logistic arm is linear, so a non-linear model might find signal the logistic missed.
+FreqAI's default learners are gradient-boosted trees; we fit LightGBM directly (freqtrade itself is not run).
+
+- **Same as H-EP08b**: L1 test trades (1,156), folds, purge (train = trades closed before the test start), training pool
+  (all four candidates, L0), label, ex-ante facts (`meta_label_b.build_trades`), costs, the 20% veto per symbol and fold,
+  1,000 random vetoes with `default_rng(20261113)`, `MIN_KEPT` 100, seed 20261113, overlap disclosure.
+- **Tree model**: `lightgbm` 4.6.0 `LGBMClassifier(n_estimators=300, learning_rate=0.03, num_leaves=15, min_child_samples=40,
+  subsample=0.8, subsample_freq=1, colsample_bytree=0.8, reg_lambda=1.0, random_state=20261113, deterministic=True,
+  n_jobs=1)`, inputs = the same numeric facts as the logistic (missing left as missing), fixed now and never tuned.
+  - Test trades: one model per fold, fitted on the whole training pool.
+  - Training-pool trades (for Laya's paragraph and `logistic_plus`): out-of-fold scores. The pool, sorted by signal time,
+    is cut into 5 contiguous blocks; each block is scored by a model fitted on the other blocks minus every trade whose
+    [signal, exit] interval overlaps the block's span (purged).
+- **Paragraph added to the H-EP08b state** (English, nothing else changes): "A tree model trained only on earlier trades
+  puts the chance that this trade loses money at N%. The facts that moved its estimate most: A (raises it), B (lowers it),
+  C (...)." — the three largest LightGBM contributions (`pred_contrib`) by size, strategy one-hots merged into one fact.
+- **Laya training**: identical to H-EP08b (checkpoint 7b928d82, `laya-train --epochs 4 --seed 20261113`, Kaggle T4,
+  unchanged `episodes/ep08/kaggle_train_b.py`), on the new states. Arm `laya_tree`.
+- **Arms**, all vetoing the same 20% per symbol and fold: `lgbm` (tree score); `laya_tree`; `laya_ft_b` (EP08 scores,
+  `runs/ep08b/scores_b.jsonl`); `logistic` (H-EP08b arm); `logistic_plus` (the same logistic with the tree score as an
+  extra input); `cost_rule`; `random`. `L1` (no veto) is the reference.
+- **H-EP09a (tree alone)**, per symbol, for `lgbm`: (b) max drawdown and worst month smaller in size than L1's and than
+  the random medians; (c) net expectancy > random median; (e) > `logistic`; (f) > `cost_rule`.
+- **H-EP09b (Laya taught by the tree)**, per symbol, for `laya_tree`:
+  - Mechanism gates, checked first: (m1) Spearman correlation between `laya_tree` and `lgbm` scores on the test trades ≥ 0.30;
+    (m2) mean per-fold standard deviation of `laya_tree` scores > that of `laya_ft_b`. A symbol failing a gate is recorded
+    as `not taught` and counts as not met.
+  - (b) as above; (c) > random median; (g) > `laya_ft_b`; (h) > `logistic_plus`; (i) > `lgbm`.
+- Ties count as not met; fewer than 100 kept trades → `insufficient`.
+- **Verdicts**, each separately: `PASS` = all its conditions on both BTC and ETH; `WEAK` = all on BTC only; `FAIL` otherwise.
+  Also reported: test AUC of each scorer, vetoed vs kept mean net return, percentile among the random runs, and the
+  tree's three most frequent top facts. Season 2 test count after this entry: 2 (H-EP09a, H-EP09b); the same 1,156
+  trades have now been used by H-EP08, H-EP08b and H-EP09. Reported whatever it shows.
+
 ## Amendments
 
 1. **2026-11-06, after running H-EP03 / H-EP06: what "net expectancy" means.**
