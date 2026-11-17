@@ -1,45 +1,45 @@
 {
- "run_utc": "2026-11-17T09:03:05+00:00",
+ "run_utc": "2026-11-17T10:03:08+00:00",
  "start_utc": "2026-11-07T08:00:00+00:00",
- "BTCUSDT_1h_last_bar": "2026-11-17T08:00:00+00:00",
+ "BTCUSDT_1h_last_bar": "2026-11-17T09:00:00+00:00",
  "BTCUSDT_4h_last_bar": "2026-11-17T04:00:00+00:00",
  "BTCUSDT_chosen": {
   "2026-11": "FVG-1h"
  },
- "ETHUSDT_1h_last_bar": "2026-11-17T08:00:00+00:00",
+ "ETHUSDT_1h_last_bar": "2026-11-17T09:00:00+00:00",
  "ETHUSDT_4h_last_bar": "2026-11-17T04:00:00+00:00",
  "ETHUSDT_chosen": {
   "2026-11": "FVG-1h"
  },
- "new_signals": 0,
+ "new_signals": 2,
  "tracks": {
   "1_registered_multi_2pct": {
-   "trades": 20,
+   "trades": 21,
    "wins": 7,
-   "mean_net": 0.00864718405875584,
-   "equity": 11115.51,
-   "max_dd": -0.16091364527611496
+   "mean_net": 0.007827685799060367,
+   "equity": 10868.7,
+   "max_dd": -0.1795449511137892
   },
   "2_walkforward_only": {
-   "trades": 20,
+   "trades": 21,
    "wins": 7,
-   "mean_net": 0.00864718405875584,
-   "equity": 11795.43,
-   "max_dd": -0.09101723248584714
+   "mean_net": 0.007827685799060367,
+   "equity": 11694.44,
+   "max_dd": -0.0988001969064064
   },
   "3_laya_en": {
-   "trades": 20,
+   "trades": 21,
    "wins": 7,
-   "mean_net": 0.00864718405875584,
-   "equity": 11795.43,
-   "max_dd": -0.09101723248584714
+   "mean_net": 0.007827685799060367,
+   "equity": 11694.44,
+   "max_dd": -0.0988001969064064
   },
   "4_risk_0.5pct_exploratory": {
-   "trades": 20,
+   "trades": 21,
    "wins": 7,
-   "mean_net": 0.00864718405875584,
-   "equity": 10204.24,
-   "max_dd": -0.049436072111010865
+   "mean_net": 0.007827685799060367,
+   "equity": 10147.59,
+   "max_dd": -0.05471271829857427
   }
  }
 }
