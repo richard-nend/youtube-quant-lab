@@ -64,9 +64,11 @@ def open_qty(view: EngineView, pending=()) -> tuple[dict, dict]:
     return live, queued
 
 
-def to_orders(d: dict, view: EngineView, mark: dict[str, Decimal], pending=()) -> list:
+def to_orders(d: dict, view: EngineView, mark: dict[str, Decimal], pending=(), legs: dict | None = None) -> list:
     """mark 키는 "BTC"/"ETH". 판단 한 건 = 그 팀의 이전 미체결 주문 취소 + 목표 포지션까지의 차이 주문.
-    pending = 그 팀 큐에 아직 남은 요청(취소할 수 없으니 상한에 센다)."""
+    pending = 그 팀 큐에 아직 남은 요청(취소할 수 없으니 상한에 센다).
+    지정가 진입의 손절·익절은 주문에 넣지 않고 legs[종목]에 담는다(체결 뒤에 데몬이 낸다: 체결 전에 닿으면 엔진이
+    무포지션 reduce-only 로 취소해 익절을 잃는다, 리뷰 I3)."""
     if validate(d):   # 깨진 판단은 보유(주문·취소 없음)
         return []
     team, tag = d["team"], f"{d['team']}:{d['decided_utc']}"
@@ -109,7 +111,12 @@ def to_orders(d: dict, view: EngineView, mark: dict[str, Decimal], pending=()) -
         if delta:
             out.append(OrderRequest(iid, "buy" if delta > 0 else "sell", typ, abs(delta),
                                     reduce_only=bool(cur) and (delta > 0) != (cur > 0), **kw))
-        if want:
+        if want and typ == "limit" and delta and (delta > 0) == (want > 0):   # 지정가로 늘리는 진입: 다리는 체결 뒤
+            if legs is not None and ("stop" in it or "take_profit" in it):
+                legs[sym] = {"iid": iid, "exit_side": "sell" if want > 0 else "buy", "qty": str(abs(want)), "tag": tag,
+                             "stop": str(it["stop"]) if "stop" in it else None,
+                             "target": str(it["take_profit"]) if "take_profit" in it else None}
+        elif want:
             ex = "sell" if want > 0 else "buy"
             for key, typ2 in (("stop", "stop_market"), ("take_profit", "take_profit_market")):
                 if key in it:

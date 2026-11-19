@@ -271,3 +271,30 @@ def test_ours_two_signals_same_hour_respect_3x_cap(tmp_path):
     gross = sum(abs(v.position(i)) * d.lg.engines["ours"].mark_of(i) for i in (BTC, ETH))
     assert v.position(BTC) and v.position(ETH)
     assert gross <= 3 * Decimal(5000)   # 진입 시점 순자산(수수료 전) 기준 상한
+
+
+def test_ai_limit_entry_gets_stop_and_tp_after_fill(tmp_path):
+    """리뷰 I3: 지정가 진입과 함께 낸 익절이 체결 전에 닿으면 엔진이 취소한다 → 손절·익절은 체결 뒤에 낸다."""
+    d = dm.Daemon(tmp_path, repo=tmp_path)
+    run(d, T0, 5)
+    p = write_decision(tmp_path)
+    dd = json.loads(p.read_text())
+    dd["items"][0].update(order="limit", limit_price=90.0, stop=80.0, take_profit=120.0)
+    p.write_text(json.dumps(dd))
+    run(d, T0 + 5_000, 70)
+    v = d.lg.view("claude")
+    assert [o.req.type for o in v.open_orders(BTC)] == ["limit"] and v.position(BTC) == 0
+    t = T0 + 80_000
+    for i in range(5):                                # 매도 호가가 지정가 아래로 → 체결
+        ts = t + i * 1000
+        d.on_record(BookSnapshot(ts, TOOBIT, "BTC-SWAP-USDT", [[88.0, 5000.0]], [[89.0, 5000.0]], ts))
+        d.on_record(Trade(ts + 1, TOOBIT, "BTC-SWAP-USDT", 89.0, 100.0, "sell", f"x{ts}", ts + 1))
+        d.tick(ts)
+    run(d, t + 5_000, 8)
+    assert v.position(BTC) > 0
+    legs = {o.req.type: o for o in v.open_orders(BTC) if o.req.reduce_only}
+    assert set(legs) == {"stop_market", "take_profit_market"}
+    assert legs["stop_market"].req.trigger.price == 80 and legs["take_profit_market"].req.qty == legs["stop_market"].req.qty
+    d.close()
+    d2 = dm.Daemon(tmp_path, repo=tmp_path)           # 다리 정보는 상태 파일에 남는다
+    assert d2.st["ai_legs"]["claude"]["BTC"]["stop"] == "80.0"

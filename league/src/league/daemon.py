@@ -175,14 +175,20 @@ class Daemon:
             if not new:
                 continue
             f, did = new[-1], f"{team}:{new[-1].stem}"
+            legs: dict = {}
             try:
                 d = json.loads(f.read_text())
-                orders = to_orders(d, self.lg.view(team), self._marks(team), self.lg.queues[team].pending)
+                orders = to_orders(d, self.lg.view(team), self._marks(team), self.lg.queues[team].pending, legs)
             except Exception:
                 log.exception("%s decision %s unreadable, treated as hold", team, f.stem)
-                orders = []
+                orders, legs = [], {}
             mark_applied(self.applied, did)   # 먼저 기록: 재시작해도 두 번 넣지 않는다
             self.lg.submit(team, orders)
+            mine = self.st.setdefault("ai_legs", {}).setdefault(team, {})
+            for sym, iid in IID.items():   # 이 판단이 손댄 종목(주문을 낸 종목)의 옛 다리 정보는 버린다(주문은 판단이 취소)
+                if any(getattr(o, "instrument_id", None) == iid for o in orders):
+                    mine.pop(sym, None)
+            mine.update(legs)
             self.st["dec_equity"][did] = str(self.lg.view(team).equity())
             log.info("%s decision %s applied: %d orders", team, f.stem, len(orders))
             changed = True
@@ -301,21 +307,35 @@ class Daemon:
         log.info("ours %s entered: %s %s %s (brake score %.3f)", s.key, side, qty, s.symbol, score)
 
     def place_legs(self) -> None:
-        """포지션이 있는데 살아 있는 손절/익절이 없으면 (다시) 낸다. 수량 = 진입 주문 수량(reduce-only 라 포지션까지만 체결)."""
-        if self.lg.queues["ours"].pending:
+        """포지션이 있는데 살아 있는 손절/익절이 없으면 (다시) 낸다. 수량 = 진입 주문 수량(reduce-only 라 포지션까지만 체결).
+        우리 팀(ours_open)과 AI 팀의 지정가 진입(ai_legs, 리뷰 I3) 모두."""
+        self._legs("ours", list(self.st.get("ours_open", {}).items()))
+        for team in AI_TEAMS:
+            mine = self.st.get("ai_legs", {}).get(team, {})
+            eng = self.lg.engines[team]
+            for sym, t in list(mine.items()):   # 진입이 끝났고(체결·취소) 포지션도 없으면 거래 끝: 정보 버림
+                entry = next((o for o in eng.orders if o.req.tag == t["tag"] and o.req.instrument_id == t["iid"]
+                              and not o.req.reduce_only), None)
+                if entry is not None and not entry.live and not self.lg.view(team).position(t["iid"]):
+                    del mine[sym]
+            self._legs(team, [(t["tag"], t) for t in mine.values()])
+
+    def _legs(self, team: str, items) -> None:
+        if self.lg.queues[team].pending:
             return   # 낸 주문이 아직 엔진에 안 들어감
-        v, out = self.lg.view("ours"), []
-        for tag, t in self.st.get("ours_open", {}).items():
-            if not v.position(t["iid"]):
+        v, out = self.lg.view(team), []
+        for tag, t in items:
+            pos = v.position(t["iid"])
+            if not pos or (pos > 0) != (t["exit_side"] == "sell"):
                 continue
             live = {o.req.type for o in v.open_orders(t["iid"]) if o.req.tag == tag and o.req.reduce_only}
-            for typ, px in (("stop_market", t["stop"]), ("take_profit_market", t["target"])):
-                if typ not in live:
+            for typ, px in (("stop_market", t.get("stop")), ("take_profit_market", t.get("target"))):
+                if px is not None and typ not in live:
                     out.append(OrderRequest(t["iid"], t["exit_side"], typ, Decimal(t["qty"]),
                                             trigger=Trigger(Decimal(px), "mark"), reduce_only=True, tag=tag))
-                    log.info("ours %s: %s placed after fill", tag, typ)
+                    log.info("%s %s: %s placed after fill", team, tag, typ)
         if out:
-            self.lg.submit("ours", out)
+            self.lg.submit(team, out)
 
     def time_exits(self, now: int) -> None:
         """backtest simulate 의 시간 규칙: 지정가 미체결 만료(limit_ttl), 보유 max_hold 봉 뒤 그 봉 마감에 시장가 청산.
