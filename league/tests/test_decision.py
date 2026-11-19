@@ -93,3 +93,36 @@ def test_decision_applied_once(tmp_path):
             sent += to_orders(dec([item()]), v, MARK)
             mark_applied(p, "f.json")
     assert len(sent) == 1
+
+
+def test_cap_counts_untouched_existing_position():
+    v = league(pos_qty=250).view("claude")   # BTC 약 250% (순자산 ~ 5000 → 12.5 BTC가 아니라 mark 100 기준 25000/5000=500%?)
+    cur_pct = abs(v.position(BTC)) * 100 / v.equity() * 100
+    o = to_orders(dec([item("ETH", "long", 300), item("BTC", "hold", 0)]), v, MARK)
+    eth = sum(x.qty for x in o if x.instrument_id == ETH and x.type == "market")
+    room = max(Decimal(0), 300 - cur_pct)
+    assert eth * 100 / v.equity() * 100 <= room + Decimal("0.2")
+
+
+def test_cap_with_partial_untouched():
+    v = league(pos_qty=25).view("claude")    # 25*100/5000 = 50%
+    o = to_orders(dec([item("ETH", "long", 300), item("BTC", "hold", 0)]), v, MARK)
+    eth = sum(x.qty for x in o if x.instrument_id == ETH)
+    assert abs(eth * 100 / v.equity() * 100 - 250) < Decimal("0.2")
+
+
+def test_malformed_returns_hold():
+    v = league(rest_bid=True).view("claude")
+    assert to_orders({"team": "claude"}, v, MARK) == []
+    assert to_orders(dec([item(action="yolo")]), v, MARK) == []
+
+
+def test_missing_or_zero_mark_is_hold():
+    v = league().view("claude")
+    assert to_orders(dec([item("ETH", "long", 10)]), v, {"BTC": Decimal(100)}) == []
+    assert to_orders(dec([item()]), v, {"BTC": Decimal(0)}) == []
+
+
+def test_tiny_pct_does_not_flatten():
+    v = league(pos_qty=3).view("claude")
+    assert to_orders(dec([item(pct=0.001)]), v, MARK) == []

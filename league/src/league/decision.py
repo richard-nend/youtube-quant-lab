@@ -52,23 +52,35 @@ def _pos(x) -> bool:
 
 def to_orders(d: dict, view: EngineView, mark: dict[str, Decimal]) -> list:
     """mark 키는 "BTC"/"ETH". 판단 한 건 = 그 팀의 이전 미체결 주문 취소 + 목표 포지션까지의 차이 주문."""
-    errs = validate(d)
-    if errs:
-        raise ValueError("; ".join(errs))
+    if validate(d):   # 깨진 판단은 보유(주문·취소 없음)
+        return []
     team, tag = d["team"], f"{d['team']}:{d['decided_utc']}"
-    items = [] if d["status"] == "hold_fallback" else [it for it in d["items"] if it["action"] != "hold"]
-    target = {it["symbol"]: Decimal(str(it["notional_pct"])) * {"long": 1, "short": -1, "close": 0}[it["action"]]
-              for it in items}
-    gross = sum(abs(v) for v in target.values())
-    if gross > CAP:
-        target = {k: v * CAP / gross for k, v in target.items()}
-    out: list = []
+    ok = lambda s: Decimal(str(mark.get(s) or 0)) > 0   # 마크 없음/0 → 그 종목은 보유
+    items = [] if d["status"] == "hold_fallback" else [
+        it for it in d["items"] if it["action"] != "hold" and ok(it["symbol"])]
+    sign = {"long": 1, "short": -1, "close": 0}
+    target = {it["symbol"]: Decimal(str(it["notional_pct"])) * sign[it["action"]] for it in items}
+    flat = {s for s, v in target.items() if v == 0}
     eq = view.equity()
+    pct = lambda s: view.position(IID[s]) * Decimal(str(mark.get(s) or 0)) / eq * 100   # 현재 부호 있는 노출(%)
+    untouched = sum(abs(pct(s)) for s in IID if s not in target)
+    gross = sum(abs(v) for v in target.values())
+    room = max(Decimal(0), CAP - untouched)
+    if gross > room:   # 결과 합계가 상한을 넘으면 목표만 비례 축소. 이미 가진 같은 방향 노출은 줄이지 않는다
+        req, target = target, {}
+        for k, v in req.items():
+            t = v * room / gross
+            if v and pct(k) * v > 0 and abs(pct(k)) > abs(t):   # 이미 가진 같은 방향 노출은 요청 한도까지 유지
+                t = v / abs(v) * min(abs(pct(k)), abs(v))
+            target[k] = t
+    out: list = []
     for it in items:
         sym, iid = it["symbol"], IID[it["symbol"]]
         out += [Cancel(ord_id=o.ord_id) for o in view.open_orders(iid) if (o.req.tag or "").startswith(team + ":")]
-        want = (eq * target[sym] / 100 / Decimal(mark[sym])).quantize(STEP, ROUND_DOWN) if target[sym] else Decimal(0)
+        want = (eq * target[sym] / 100 / Decimal(str(mark[sym]))).quantize(STEP, ROUND_DOWN) if target[sym] else Decimal(0)
         cur = view.position(iid)
+        if want == 0 and sym not in flat:   # 반올림으로 0 → 청산 아님(명시적 0%/close만 청산)
+            continue
         px = Decimal(str(it["limit_price"])) if it["order"] == "limit" else None
         kw = dict(tag=tag, **({"price": px, "tif": "GTC"} if px else {}))
         typ = it["order"]
