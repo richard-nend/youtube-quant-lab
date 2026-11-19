@@ -84,7 +84,7 @@ def call_codex(prompt: str) -> CallResult:
 
 
 def _vertex(prompt: str, model: str) -> tuple[int, dict]:
-    v = _VertexAuth(None, "global")
+    v = _VertexAuth(os.environ.get("VERTEX_PROJECT") or CFG["vertex_project"], "global")
     r = requests.post(f"{v.base}/{model}:generateContent", headers=v.headers(), timeout=CFG["timeout_s"],
                       json={"contents": [{"role": "user", "parts": [{"text": prompt}]}]})
     return r.status_code, r.json()
