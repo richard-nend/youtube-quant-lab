@@ -175,3 +175,41 @@ def test_restart_replays_flushed_records_after_snapshot(tmp_path):
     d2 = dm.Daemon(tmp_path, repo=tmp_path)
     assert snap_ts < d2.lg.last_ts and d2.lg.last_ts >= flushed_upto - 60_000
     assert d2.stats["events"] > 0
+
+
+def test_time_exit_values_come_from_candidate_sim():
+    assert dm.sim_exits("FVG-1h") == (H, 20, 96)       # ep03 cost_aware_smc.SIM
+    assert dm.sim_exits("FLOW-4h") == (4 * H, 10, 12)  # simulate 기본 limit_ttl, CANDIDATES max_hold
+
+
+def test_unfilled_limit_entry_cancelled_at_limit_ttl(tmp_path):
+    hour = T0 // H * H
+    s = sig()
+    s.entry, s.limit_price, s.signal_time = "limit", 90.0, pd.Timestamp(hour - H, unit="ms", tz="UTC")
+    d = dm.Daemon(tmp_path, repo=tmp_path, brake=FakeBrake())
+    run(d, T0, 5)
+    d.run_hour(hour, [s])
+    run(d, T0 + 5_000, 5)
+    expire = hour - H + 21 * H                        # FVG-1h limit_ttl 20: 신호 봉 다음 20개 봉 마감까지
+    run(d, expire - 120_000, 65)
+    assert len(d.lg.view("ours").open_orders(BTC)) == 3
+    run(d, expire + 1_000, 65)
+    assert d.lg.view("ours").open_orders(BTC) == [] and d.lg.view("ours").position(BTC) == 0
+    assert d.st["ours_open"] == {}
+
+
+def test_position_closed_at_max_hold(tmp_path):
+    hour = T0 // H * H
+    s = sig()
+    s.signal_time = pd.Timestamp(hour - H, unit="ms", tz="UTC")
+    d = dm.Daemon(tmp_path, repo=tmp_path, brake=FakeBrake())
+    run(d, T0, 5)
+    d.run_hour(hour, [s])
+    run(d, T0 + 5_000, 65)
+    assert d.lg.view("ours").position(BTC) > 0
+    close = hour + 97 * H                             # 체결 봉(hour) + max_hold 96 봉의 마감
+    run(d, close - 180_000, 65)
+    assert d.lg.view("ours").position(BTC) > 0
+    run(d, close + 1_000, 65)
+    assert d.lg.view("ours").position(BTC) == 0 and d.lg.view("ours").open_orders(BTC) == []
+    assert d.st["ours_open"] == {}

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import inspect
 import json
 import logging
 import signal
@@ -53,6 +54,16 @@ def _write_json(path: Path, obj) -> None:
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps(obj, ensure_ascii=False, indent=1, default=str))
     tmp.replace(path)
+
+
+def sim_exits(candidate: str) -> tuple[int, int, int]:
+    """(봉 길이 ms, limit_ttl, max_hold) — 13주 러너·백테스트와 같은 asm.CANDIDATES sim 값, 없으면 simulate 기본값."""
+    from quant_lab.engine.backtest import simulate
+
+    from .ours.signals import asm
+    tf, _, _, sim = asm.CANDIDATES[candidate]
+    par = inspect.signature(simulate).parameters
+    return {"1h": H, "4h": 4 * H}[tf], sim.get("limit_ttl", par["limit_ttl"].default), sim.get("max_hold", par["max_hold"].default)
 
 
 def _default_signals(now):
@@ -134,6 +145,7 @@ class Daemon:
         except Exception:
             log.exception("raw flush failed (rows kept in memory)")
         self.apply_decisions()
+        self.time_exits(now)
         self.write_accounts(now)
         self.update_results()
         log.info("minute %s records=%d events=%d late=%d buffered=%d", _utc(now, "%H:%M"), self.stats["records"],
@@ -272,7 +284,52 @@ class Daemon:
             OrderRequest(iid, ex, "stop_market", qty, trigger=Trigger(Decimal(str(s.stop)), "mark"), reduce_only=True, tag=tag),
             OrderRequest(iid, ex, "take_profit_market", qty, trigger=Trigger(Decimal(str(s.target)), "mark"),
                          reduce_only=True, tag=tag)])
+        step, ttl, hold = sim_exits(s.candidate)
+        sig_ms = int(s.signal_time.timestamp() * 1000)   # 신호 봉의 시작 시각(봉 index)
+        self.st.setdefault("ours_open", {})[tag] = {
+            "iid": iid, "step_ms": step, "max_hold": hold, "signal_ms": sig_ms,
+            # simulate: 지정가는 신호 다음 봉부터 limit_ttl 개 봉 안에 닿아야 체결 → 봉 (signal+ttl) 마감에 만료
+            "expire_ms": sig_ms + (ttl + 1) * step if s.entry == "limit" else None}
+        self._save()
         log.info("ours %s entered: %s %s %s (brake score %.3f)", s.key, side, qty, s.symbol, score)
+
+    def time_exits(self, now: int) -> None:
+        """backtest simulate 의 시간 규칙: 지정가 미체결 만료(limit_ttl), 보유 max_hold 봉 뒤 그 봉 마감에 시장가 청산.
+        손절·익절로 이미 끝난 거래는 남은 주문을 치우고 목록에서 뺀다."""
+        opened, eng, v = self.st.get("ours_open", {}), self.lg.engines["ours"], self.lg.view("ours")
+        changed = False
+        for tag, t in list(opened.items()):
+            iid = t["iid"]
+            entry = next((o for o in eng.orders if o.req.tag == tag and not o.req.reduce_only), None)
+            if entry is None:
+                continue   # 아직 큐에 있음(다음 이벤트에 엔진으로)
+            rest = [o for o in v.open_orders(iid) if o.req.tag == tag]
+            out, why = [], None
+            if entry.live and not entry.filled and t["expire_ms"] and now >= t["expire_ms"]:
+                out, why = [Cancel(ord_id=o.ord_id) for o in rest], "limit expired"
+            elif entry.filled:
+                if t.get("close_ms") is None:
+                    fill_ms = next(f["ts_ms"] for f in eng.fills if f["ord_id"] == entry.ord_id)
+                    bar = t["signal_ms"] + (fill_ms - t["signal_ms"]) // t["step_ms"] * t["step_ms"]
+                    t["close_ms"] = bar + (t["max_hold"] + 1) * t["step_ms"]   # 봉 (fill + max_hold) 마감, 종가 = 그때 시장가
+                pos = v.position(iid)
+                if not pos and not entry.live:
+                    out, why = [Cancel(ord_id=o.ord_id) for o in rest], "closed by stop/target"
+                elif now >= t["close_ms"]:
+                    out = [Cancel(ord_id=o.ord_id) for o in rest]
+                    if pos:
+                        out.append(OrderRequest(iid, "sell" if pos > 0 else "buy", "market", abs(pos), reduce_only=True, tag=tag))
+                    why = "max_hold"
+            elif not entry.live:
+                out, why = [Cancel(ord_id=o.ord_id) for o in rest], "entry not filled (rejected/cancelled)"
+            if why:
+                self.lg.submit("ours", out)
+                del opened[tag]
+                changed = True
+                log.info("ours %s done: %s", tag, why)
+        if changed:
+            self.snapshot()   # 스냅샷 먼저: 그 사이 죽어도 추적이 남아 다시 판단(청산은 reduce-only라 중복 무해)
+        self._save()
 
     # ---------- 저장·성적판 ----------
     def _mid(self) -> Decimal | None:
