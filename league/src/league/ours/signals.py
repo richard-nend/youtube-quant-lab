@@ -108,6 +108,8 @@ def new_signals(now: datetime) -> list[LiveSignal]:
                 key = f"{sym}|{cand}|{ts.isoformat()}"
                 if not (now - timedelta(hours=1) < ts + step <= now) or any(x.key == key for x in out):
                     continue  # one signal per bar, the first (as build_trades)
+                # as the runner: the month choice counts still-open trades at their provisional result, so early in a
+                # month it can differ from the backtest's choice (seen: ETH 2026-03-01, FLOW-1h live vs FVG-4h backtest)
                 if chosen_candidate(trades, ts.to_period("M").to_timestamp().tz_localize("UTC")) != cand:
                     continue
                 out.append(LiveSignal(key, sym, cand, ts, int(s.side), s.entry,
