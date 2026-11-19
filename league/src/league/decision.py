@@ -62,25 +62,25 @@ def to_orders(d: dict, view: EngineView, mark: dict[str, Decimal]) -> list:
     target = {it["symbol"]: Decimal(str(it["notional_pct"])) * sign[it["action"]] for it in items}
     flat = {s for s, v in target.items() if v == 0}
     eq = view.equity()
+    if eq <= 0:
+        return []
     pct = lambda s: view.position(IID[s]) * Decimal(str(mark.get(s) or 0)) / eq * 100   # 현재 부호 있는 노출(%)
     untouched = sum(abs(pct(s)) for s in IID if s not in target)
     gross = sum(abs(v) for v in target.values())
-    room = max(Decimal(0), CAP - untouched)
-    if gross > room:   # 결과 합계가 상한을 넘으면 목표만 비례 축소. 이미 가진 같은 방향 노출은 줄이지 않는다
-        req, target = target, {}
-        for k, v in req.items():
-            t = v * room / gross
-            if v and pct(k) * v > 0 and abs(pct(k)) > abs(t):   # 이미 가진 같은 방향 노출은 요청 한도까지 유지
-                t = v / abs(v) * min(abs(pct(k)), abs(v))
-            target[k] = t
+    if gross > max(Decimal(0), CAP - untouched):
+        # 상한이 걸리면: 이미 같은 방향으로 가진 노출은 (요청 한도까지) 유지만 하고 사용분으로 센다.
+        held = {k: (v / abs(v)) * min(abs(pct(k)), abs(v)) for k, v in target.items() if v and pct(k) * v > 0}
+        free = {k: abs(v) for k, v in target.items() if k not in held}
+        room = max(Decimal(0), CAP - untouched - sum(abs(h) for h in held.values()))
+        f = min(Decimal(1), room / sum(free.values())) if free else Decimal(0)
+        target = {k: held[k] if k in held else target[k] * f for k in target}
+    items = [it for it in items if it["symbol"] in flat or _qty(eq, target[it["symbol"]], mark[it["symbol"]])]  # 반올림 0 → 그 종목은 보유(취소도 안 함)
     out: list = []
     for it in items:
         sym, iid = it["symbol"], IID[it["symbol"]]
         out += [Cancel(ord_id=o.ord_id) for o in view.open_orders(iid) if (o.req.tag or "").startswith(team + ":")]
-        want = (eq * target[sym] / 100 / Decimal(str(mark[sym]))).quantize(STEP, ROUND_DOWN) if target[sym] else Decimal(0)
+        want = _qty(eq, target[sym], mark[sym])
         cur = view.position(iid)
-        if want == 0 and sym not in flat:   # 반올림으로 0 → 청산 아님(명시적 0%/close만 청산)
-            continue
         px = Decimal(str(it["limit_price"])) if it["order"] == "limit" else None
         kw = dict(tag=tag, **({"price": px, "tif": "GTC"} if px else {}))
         typ = it["order"]
@@ -98,6 +98,10 @@ def to_orders(d: dict, view: EngineView, mark: dict[str, Decimal]) -> list:
                     out.append(OrderRequest(iid, ex, typ2, abs(want), trigger=Trigger(Decimal(str(it[key])), "mark"),
                                             reduce_only=True, tag=tag))
     return out
+
+
+def _qty(eq, pct, mark) -> Decimal:
+    return (eq * pct / 100 / Decimal(str(mark))).quantize(STEP, ROUND_DOWN) if pct else Decimal(0)
 
 
 def applied_ids(path: Path) -> set[str]:
