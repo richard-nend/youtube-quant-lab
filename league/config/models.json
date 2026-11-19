@@ -1,8 +1,9 @@
 {
   "claude": "claude-opus-5-5",
   "codex": "gpt-6.2-sol",
-  "gemini_vertex": "gemini-4-neon",
-  "gemini_agy": "gemini-4-neon-high",
+  "gemini_vertex": "gemini-4-argon",
+  "gemini_agy": "gemini-4-argon-high",
+  "effort": "high",
   "vertex_project": "gen-lang-client-0060132691",
   "timeout_s": 600
 }

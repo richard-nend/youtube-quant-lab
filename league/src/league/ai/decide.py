@@ -1,8 +1,10 @@
-"""한 팀의 한 번 판단: 계좌 읽기 → 요약 → 호출(재시도 3, 형식 오류 1회 재질문) → 판단 파일. 실패는 hold_fallback."""
+"""한 팀의 한 번 판단: 계좌 읽기 → 요약 → 호출(실패 시 30초·120초 뒤 다시, 최대 3번; 형식 오류는 따로 1회 재질문)
+→ 판단 파일. 실패는 hold_fallback."""
 from __future__ import annotations
 
 import json
 import os
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -13,6 +15,7 @@ from .callers import call_claude, call_codex, call_gemini
 from .prompt import render_prompt, reask_prompt
 
 CALLERS = {"claude": call_claude, "gpt": call_codex, "gemini": call_gemini}
+BACKOFF_S = (30, 120)   # 호출 실패 뒤 대기(초): 3번 시도
 DEFAULT_ROOT = Path(os.environ.get("LEAGUE_DATA", Path(__file__).resolve().parents[3] / "data"))
 
 
@@ -44,7 +47,8 @@ def _history(dec_dir: Path, utc: str) -> list[dict]:
     return out[::-1]
 
 
-def decide(team: str, now_ms: int, *, root: Path | None = None, caller=None, store=None, candles=None) -> Path:
+def decide(team: str, now_ms: int, *, root: Path | None = None, caller=None, store=None, candles=None,
+           sleep=time.sleep) -> Path:
     root = Path(root or DEFAULT_ROOT)
     utc = datetime.fromtimestamp(now_ms / 1000, timezone.utc).strftime("%Y%m%dT%H%M")
     path = root / "decisions" / team / f"{utc}.json"
@@ -61,24 +65,26 @@ def decide(team: str, now_ms: int, *, root: Path | None = None, caller=None, sto
             prompt = render_prompt(build_brief(store or RawStore(root / "raw"), acct, _history(path.parent, utc), now_ms, **kw))
         except Exception as e:
             prompt, err = None, f"brief: {type(e).__name__}: {str(e)[:200]}"
-        caller, p, reasked = caller or CALLERS[team], prompt, False
-        for _ in range(3 if prompt else 0):
-            try:
+        caller, p, reasked, fails = caller or CALLERS[team], prompt, False, 0
+        while prompt and fails < len(BACKOFF_S) + 1:
+            try:   # 호출 쪽 예외는 종류와 상관없이 호출 실패(CLI 출력 해석의 ValueError 포함)
                 res = caller(p)
-                use["model"], use["model_version"] = res.model, res.model_version
-                use["tokens_in"] += res.tokens_in
-                use["tokens_out"] += res.tokens_out
-                d = parse_decision(res.text, team, utc)
-            except ValueError as e:   # 형식 오류: 한 번만 재질문
-                err = f"format: {e}"
-                if not reasked:
-                    reasked, p = True, reask_prompt(prompt, str(e)[:200])
-                continue
             except Exception as e:
-                err = f"call: {type(e).__name__}: {str(e)[:200]}"
+                err, fails = f"call: {type(e).__name__}: {str(e)[:200]}", fails + 1
+                if fails <= len(BACKOFF_S):
+                    sleep(BACKOFF_S[fails - 1])   # 간격을 두고 다시(설계 4절)
                 continue
-            out, err = d, ""
-            break
+            use["model"], use["model_version"] = res.model, res.model_version
+            use["tokens_in"] += res.tokens_in
+            use["tokens_out"] += res.tokens_out
+            try:
+                out, err = parse_decision(res.text, team, utc), ""
+                break
+            except ValueError as e:   # 형식 오류: 호출 재시도와 따로, 한 번만 재질문
+                err = f"format: {e}"
+                if reasked:
+                    break
+                reasked, p = True, reask_prompt(prompt, str(e)[:200])
     out.update({k: v for k, v in use.items() if v or k.startswith("tokens")})
     if err:
         out["error"] = err

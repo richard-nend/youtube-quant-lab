@@ -8,6 +8,10 @@ CLI 판본·옵션 (2026-11-19 `--help` 확인):
 - agy 1.5.12: `-p=<프롬프트>`(값을 붙여야 함), `--output-format json`, `--sandbox`. 도구를 끄는 옵션이 없다
   (`--settings` permissions.deny, 빈 에이전트 정의 모두 효과 없음을 실험으로 확인) → 빈 임시폴더에서만 실행. 읽기 도구는 살아 있다.
 - gemini 0.66.0 CLI는 쓰지 않는다(Vertex REST는 quant_lab.llm 의 인증 재사용).
+생각 수준은 세 팀 모두 models.json "effort"(high)로 고정한다(2026-11-20 사용자 결정):
+claude `--effort high`, codex `-c model_reasoning_effort="high"`(사용자 설정 low 를 덮어씀),
+Vertex `generationConfig.thinkingConfig.thinkingLevel = "HIGH"`, agy 는 모델 이름의 수준 접미사(`gemini-4-argon-high`).
+모델 id 확인(2026-11-20, 생성 호출 없이 목록만): Vertex publishers/google/models 에 `gemini-4-argon`, `agy models` 에 `gemini-4-argon-high`.
 """
 from __future__ import annotations
 
@@ -71,7 +75,7 @@ def parse_codex(out: str, model: str) -> CallResult:
 
 def call_claude(prompt: str, cwd: str | None = None) -> CallResult:
     m = CFG["claude"]
-    out = _run(["claude", "-p", "--model", m, "--tools", "", "--no-session-persistence", "--disable-slash-commands",
+    out = _run(["claude", "-p", "--model", m, "--effort", CFG["effort"], "--tools", "", "--no-session-persistence", "--disable-slash-commands",
                 "--strict-mcp-config", "--setting-sources", "", "--output-format", "json"], prompt, cwd)
     return parse_claude(out, m)
 
@@ -79,6 +83,7 @@ def call_claude(prompt: str, cwd: str | None = None) -> CallResult:
 def call_codex(prompt: str, cwd: str | None = None) -> CallResult:
     m = CFG["codex"]
     out = _run(["codex", "exec", "--ephemeral", "--skip-git-repo-check", "-s", "read-only", "-m", m,
+                "-c", f'model_reasoning_effort="{CFG["effort"]}"',   # 사용자 ~/.codex/config.toml(low)을 덮어쓴다
                 "--disable", "shell_tool", "--disable", "unified_exec", "--color", "never", "--json", "-"], prompt, cwd)
     return parse_codex(out, m)
 
@@ -86,8 +91,16 @@ def call_codex(prompt: str, cwd: str | None = None) -> CallResult:
 def _vertex(prompt: str, model: str) -> tuple[int, dict]:
     v = _VertexAuth(os.environ.get("VERTEX_PROJECT") or CFG["vertex_project"], "global")
     r = requests.post(f"{v.base}/{model}:generateContent", headers=v.headers(), timeout=CFG["timeout_s"],
-                      json={"contents": [{"role": "user", "parts": [{"text": prompt}]}]})
-    return r.status_code, r.json()
+                      json=vertex_body(prompt))
+    try:
+        return r.status_code, r.json()
+    except ValueError:   # 게이트웨이 오류 페이지 등: 형식 오류가 아니라 호출 실패
+        raise RuntimeError(f"vertex {r.status_code}: non-JSON body {r.text[:200]!r}") from None
+
+
+def vertex_body(prompt: str) -> dict:
+    return {"contents": [{"role": "user", "parts": [{"text": prompt}]}],
+            "generationConfig": {"thinkingConfig": {"thinkingLevel": CFG["effort"].upper()}}}
 
 
 def call_agy(prompt: str, cwd: str | None = None) -> CallResult:
@@ -109,4 +122,5 @@ def call_gemini(prompt: str) -> CallResult:
     parts = d["candidates"][0]["content"]["parts"]
     u = d.get("usageMetadata", {})
     return CallResult("".join(p.get("text", "") for p in parts if not p.get("thought")), f"vertex:{m}",
-                      d.get("modelVersion", m), u.get("promptTokenCount", 0), u.get("candidatesTokenCount", 0))
+                      d.get("modelVersion", m), u.get("promptTokenCount", 0),
+                      u.get("candidatesTokenCount", 0) + u.get("thoughtsTokenCount", 0))   # 생각 토큰도 출력으로 과금

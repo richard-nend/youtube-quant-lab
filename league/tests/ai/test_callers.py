@@ -24,8 +24,12 @@ def env(tmp_path, monkeypatch):
     return tmp_path
 
 
+SLEPT = []
+
+
 def run(env, fake):
-    p = dmod.decide("claude", NOW, root=env, caller=fake)
+    SLEPT.clear()
+    p = dmod.decide("claude", NOW, root=env, caller=fake, sleep=SLEPT.append)
     return p, json.loads(p.read_text())
 
 
@@ -44,7 +48,59 @@ def test_retry_on_exception_then_ok(env):
             raise RuntimeError("boom")
         return res(GOOD)
     _, d = run(env, fake)
-    assert d["status"] == "ok" and len(calls) == 3
+    assert d["status"] == "ok" and len(calls) == 3 and SLEPT == [30, 120]   # 호출 실패 사이에 간격(리뷰 I6)
+
+
+def test_three_call_failures_hold_with_backoff(env):
+    calls = []
+
+    def fake(prompt):
+        calls.append(1)
+        raise ValueError("cli printed garbage")   # 호출 쪽 ValueError 는 형식 오류가 아니라 호출 실패
+    _, d = run(env, fake)
+    assert d["status"] == "hold_fallback" and len(calls) == 3 and SLEPT == [30, 120] and d["error"].startswith("call:")
+
+
+def test_reask_does_not_use_up_call_retries(env):
+    seq = iter(["bad", RuntimeError("x"), RuntimeError("y"), GOOD])
+
+    def fake(prompt):
+        r = next(seq)
+        if isinstance(r, Exception):
+            raise r
+        return res(r)
+    _, d = run(env, fake)
+    assert d["status"] == "ok"
+
+
+def test_vertex_non_json_body_is_call_failure(monkeypatch):
+    class R:
+        status_code = 502
+        text = "<html>bad gateway</html>"
+
+        def json(self):
+            raise ValueError("Expecting value")
+
+    class Auth:
+        base = "https://x"
+
+        def __init__(self, *a):
+            pass
+
+        def headers(self):
+            return {}
+    monkeypatch.setattr(callers, "_VertexAuth", Auth)
+    monkeypatch.setattr(callers.requests, "post", lambda *a, **k: R())
+    with pytest.raises(RuntimeError, match="502"):
+        callers._vertex("p", "m")
+
+
+def test_vertex_output_tokens_include_thinking(monkeypatch):
+    monkeypatch.setattr(callers, "_vertex", lambda prompt, model: (200, {
+        "candidates": [{"content": {"parts": [{"text": "t", "thought": True}, {"text": "ans"}]}}],
+        "usageMetadata": {"promptTokenCount": 7, "candidatesTokenCount": 3, "thoughtsTokenCount": 40}}))
+    r = callers.call_gemini("p")
+    assert (r.text, r.tokens_in, r.tokens_out) == ("ans", 7, 43)
 
 
 def test_bad_format_reasks_once(env):
@@ -58,8 +114,10 @@ def test_bad_format_reasks_once(env):
 
 
 def test_all_fail_hold_fallback(env):
-    _, d = run(env, lambda prompt: res("nope"))
+    calls = []
+    _, d = run(env, lambda prompt: calls.append(1) or res("nope"))
     assert d["status"] == "hold_fallback" and d["items"] == [] and d["error"] and not validate(d)
+    assert len(calls) == 2 and SLEPT == []   # 형식 오류: 재질문 1회뿐
 
 
 def test_brief_failure_hold_fallback(env, monkeypatch):
@@ -79,8 +137,8 @@ def test_corrupt_history_hold_fallback(env):
 
 
 def test_tokens_summed_across_attempts_and_on_fallback(env):
-    _, d = run(env, lambda prompt: res("nope"))     # 3번 호출, 호출당 10/5
-    assert d["status"] == "hold_fallback" and (d["tokens_in"], d["tokens_out"]) == (30, 15) and d["model"] == "m"
+    _, d = run(env, lambda prompt: res("nope"))     # 처음 + 재질문 = 2번 호출, 호출당 10/5
+    assert d["status"] == "hold_fallback" and (d["tokens_in"], d["tokens_out"]) == (20, 10) and d["model"] == "m"
     calls = []
 
     def fake(prompt):
@@ -154,3 +212,26 @@ def test_live_team(tmp_path, name):
     d = dmod.parse_decision(r.text, name, "20261119T0000")
     assert d and not validate(d), (name, r.text[:300])
     print("TOKENS", name, r.model, r.model_version, r.tokens_in, r.tokens_out)
+
+
+def test_equal_reasoning_level_pinned_for_all_teams(monkeypatch):
+    """사용자 결정(11-20): 세 팀 같은 생각 수준(high)을 명시. codex 사용자 설정(low)을 물려받지 않는다."""
+    cmds = []
+
+    def fake_run(cmd, stdin=None, cwd=None):
+        cmds.append(cmd)
+        if cmd[0] == "claude":
+            return json.dumps({"result": "x", "usage": {"input_tokens": 1, "output_tokens": 1}})
+        if cmd[0] == "agy":
+            return json.dumps({"status": "SUCCESS", "response": "x"})
+        return ""
+    monkeypatch.setattr(callers, "_run", fake_run)
+    callers.call_claude("p")
+    callers.call_codex("p")
+    callers.call_agy("p")
+    claude, codex, agy = cmds
+    assert claude[claude.index("--effort") + 1] == "high"
+    assert codex[codex.index("-c") + 1] == 'model_reasoning_effort="high"'
+    assert agy[agy.index("--model") + 1] == "gemini-4-argon-high"
+    assert callers.vertex_body("p")["generationConfig"]["thinkingConfig"]["thinkingLevel"] == "HIGH"
+    assert callers.CFG["gemini_vertex"] == "gemini-4-argon"
