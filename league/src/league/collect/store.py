@@ -43,6 +43,9 @@ class RawStore:
     def read(self, venue: str, kind: str, start_ms: int, end_ms: int) -> list[dict]:
         """start_ms <= ts_ms < end_ms, ts 오름차순(같으면 파일·행 순서 유지)."""
         out: list[dict] = []
+        first = datetime.fromtimestamp(start_ms / 1000, tz=timezone.utc).strftime("%Y-%m-%d%H")
         for f in sorted((self.root / f"venue={venue}" / f"kind={kind}").glob("date=*/hour=*.parquet")):
-            out += [r for r in pq.read_table(f).to_pylist() if start_ms <= r["ts_ms"] < end_ms]
+            if f.parent.name[5:] + f.stem[5:7] < first:   # 시작 시간보다 앞선 파일은 열지 않는다(재시작 재생이 시즌 전체를 읽지 않게)
+                continue
+            out +=[r for r in pq.read_table(f).to_pylist() if start_ms <= r["ts_ms"] < end_ms]
         return sorted(out, key=lambda r: r["ts_ms"])

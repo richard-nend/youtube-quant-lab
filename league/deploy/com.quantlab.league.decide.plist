@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- AI 팀 판단: 4시간봉 마감(UTC 00·04·08·12·16·20시) 후 33분. launchd 는 로컬 시각이라 아래는 KST(UTC+9) 기준
+     09:33·13:33·17:33·21:33·01:33·05:33. 설치 때(Task 11) peri 에서 `date +%Z` 확인, KST 가 아니면 시각을 다시 계산. -->
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.quantlab.league.decide</string>
+  <key>WorkingDirectory</key><string>/Users/peri/league/youtube-quant-lab/league</string>
+  <key>ProgramArguments</key><array>
+    <string>/bin/zsh</string><string>-c</string>
+    <string>exec uv run --project /Users/peri/league/youtube-quant-lab/league python -m league.jobs decide --data /Users/peri/league/data</string>
+  </array>
+  <key>EnvironmentVariables</key><dict>
+    <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/Users/peri/.local/bin:/usr/bin:/bin</string>
+    <key>LEAGUE_DATA</key><string>/Users/peri/league/data</string>
+  </dict>
+  <key>StartCalendarInterval</key><array>
+    <dict><key>Hour</key><integer>1</integer><key>Minute</key><integer>33</integer></dict>
+    <dict><key>Hour</key><integer>5</integer><key>Minute</key><integer>33</integer></dict>
+    <dict><key>Hour</key><integer>9</integer><key>Minute</key><integer>33</integer></dict>
+    <dict><key>Hour</key><integer>13</integer><key>Minute</key><integer>33</integer></dict>
+    <dict><key>Hour</key><integer>17</integer><key>Minute</key><integer>33</integer></dict>
+    <dict><key>Hour</key><integer>21</integer><key>Minute</key><integer>33</integer></dict>
+  </array>
+  <key>StandardOutPath</key><string>/Users/peri/Library/Logs/quantlab-league-decide.log</string>
+  <key>StandardErrorPath</key><string>/Users/peri/Library/Logs/quantlab-league-decide.log</string>
+</dict></plist>

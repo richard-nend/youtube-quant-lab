@@ -61,4 +61,6 @@ class Brake:
 
 
 if __name__ == "__main__":
-    print("threshold", Brake.fit_frozen(load_pool(), PATH).threshold, "->", PATH)
+    # -m 으로 돌면 이 파일은 __main__ 이라 pickle 이 __main__.Brake 를 가리킨다 → 데몬에서 못 읽음. 패키지 쪽 클래스로 저장.
+    from league.ours.brake import Brake as PkgBrake, load_pool as pkg_pool
+    print("threshold", PkgBrake.fit_frozen(pkg_pool(), PATH).threshold, "->", PATH)

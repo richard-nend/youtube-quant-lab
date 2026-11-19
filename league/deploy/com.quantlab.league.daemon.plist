@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- 리그 상시 데몬. 13주 러너(com.quantlab.live, ~/youtube-quant-lab)와 다른 이름·다른 클론(~/league/youtube-quant-lab).
+     원본·상태는 클론 밖 ~/league/data. 경로는 peri 사용자 기준 — 설치 때(Task 11) 확인. -->
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.quantlab.league.daemon</string>
+  <key>WorkingDirectory</key><string>/Users/peri/league/youtube-quant-lab/league</string>
+  <key>ProgramArguments</key><array>
+    <string>/bin/zsh</string><string>-c</string>
+    <string>exec uv run --project /Users/peri/league/youtube-quant-lab/league python -m league.daemon --data /Users/peri/league/data --publish</string>
+  </array>
+  <key>EnvironmentVariables</key><dict>
+    <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/Users/peri/.local/bin:/usr/bin:/bin</string>
+    <key>LEAGUE_DATA</key><string>/Users/peri/league/data</string>
+    <key>QL_MAIN_ROOT</key><string>/Users/peri/league/youtube-quant-lab</string>
+    <key>OMP_NUM_THREADS</key><string>2</string>
+  </dict>
+  <key>KeepAlive</key><true/>
+  <key>RunAtLoad</key><true/>
+  <key>ThrottleInterval</key><integer>30</integer>
+  <key>ExitTimeOut</key><integer>60</integer>
+  <key>StandardOutPath</key><string>/Users/peri/Library/Logs/quantlab-league-daemon.log</string>
+  <key>StandardErrorPath</key><string>/Users/peri/Library/Logs/quantlab-league-daemon.log</string>
+</dict></plist>
