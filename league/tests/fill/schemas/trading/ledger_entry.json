@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.aitrading.invalid/trading/ledger_entry.json",
+  "title": "LedgerEntry",
+  "description": "Append-only run ledger (interfaces v1 §4). amount is signed (credit +, debit -).",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "run_id": {
+      "$ref": "../common.json#/$defs/run_id"
+    },
+    "ts_ms": {
+      "$ref": "../common.json#/$defs/ts_ms"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "fill",
+        "fee",
+        "funding",
+        "liquidation",
+        "transfer",
+        "builder_fee",
+        "adjust"
+      ]
+    },
+    "instrument_id": {
+      "anyOf": [
+        {
+          "$ref": "../common.json#/$defs/instrument_id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "amount": {
+      "$ref": "../common.json#/$defs/decimal"
+    },
+    "asset": {
+      "type": "string"
+    },
+    "ref_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "fil_id / ord_id / venue reference"
+    }
+  },
+  "required": [
+    "run_id",
+    "ts_ms",
+    "type",
+    "instrument_id",
+    "amount",
+    "asset",
+    "ref_id"
+  ]
+}

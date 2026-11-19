@@ -1,0 +1,30 @@
+[project]
+name = "quant-league"
+version = "0.1.0"
+description = "AI trading league: paper trading on Toobit order books"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "websockets==17.3",
+  "httpx==0.28.1",
+  "pyarrow==26.0.0",
+  "lightgbm==4.6.0",
+  "scikit-learn",
+  "quant-lab",
+]
+
+[tool.uv.sources]
+quant-lab = { path = "..", editable = true }
+
+[dependency-groups]
+dev = ["pytest>=8", "jsonschema>=4.21", "referencing>=0.35"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.aitrading.invalid/trading/order.json",
+  "title": "Order",
+  "description": "orders row, all modes (interfaces v1 §4–5). unknown = sent without confirmed response: never resend, resolve by status query only.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "ord_id": {
+      "$ref": "../common.json#/$defs/ord_id"
+    },
+    "run_id": {
+      "$ref": "../common.json#/$defs/run_id"
+    },
+    "acc_id": {
+      "anyOf": [
+        {
+          "$ref": "../common.json#/$defs/acc_id"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "null for backtest/paper"
+    },
+    "instrument_id": {
+      "$ref": "../common.json#/$defs/instrument_id"
+    },
+    "side": {
+      "$ref": "../common.json#/$defs/side"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "market",
+        "limit",
+        "stop_market",
+        "stop_limit",
+        "take_profit_market",
+        "take_profit_limit"
+      ]
+    },
+    "tif": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "GTC",
+            "IOC",
+            "ALO"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "limit-type orders only; ALO = post-only"
+    },
+    "qty": {
+      "$ref": "../common.json#/$defs/decimal"
+    },
+    "price": {
+      "anyOf": [
+        {
+          "$ref": "../common.json#/$defs/decimal"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "trigger": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "price": {
+              "$ref": "../common.json#/$defs/decimal"
+            },
+            "by": {
+              "type": "string",
+              "enum": [
+                "mark",
+                "last"
+              ]
+            }
+          },
+          "required": [
+            "price",
+            "by"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "reduce_only": {
+      "type": "boolean"
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 128
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "created",
+        "submitted",
+        "acknowledged",
+        "partially_filled",
+        "filled",
+        "canceled",
+        "rejected",
+        "expired",
+        "unknown"
+      ]
+    },
+    "venue_order_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "builder_fee_bps": {
+      "anyOf": [
+        {
+          "$ref": "../common.json#/$defs/decimal"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "created_ms": {
+      "$ref": "../common.json#/$defs/ts_ms"
+    },
+    "updated_ms": {
+      "$ref": "../common.json#/$defs/ts_ms"
+    }
+  },
+  "required": [
+    "ord_id",
+    "run_id",
+    "acc_id",
+    "instrument_id",
+    "side",
+    "type",
+    "tif",
+    "qty",
+    "price",
+    "trigger",
+    "reduce_only",
+    "idempotency_key",
+    "state",
+    "venue_order_id",
+    "builder_fee_bps",
+    "created_ms",
+    "updated_ms"
+  ]
+}

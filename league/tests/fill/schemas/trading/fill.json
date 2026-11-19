@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.aitrading.invalid/trading/fill.json",
+  "title": "Fill",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "fil_id": {
+      "$ref": "../common.json#/$defs/fil_id"
+    },
+    "ord_id": {
+      "$ref": "../common.json#/$defs/ord_id"
+    },
+    "run_id": {
+      "$ref": "../common.json#/$defs/run_id"
+    },
+    "ts_ms": {
+      "$ref": "../common.json#/$defs/ts_ms"
+    },
+    "price": {
+      "$ref": "../common.json#/$defs/decimal"
+    },
+    "qty": {
+      "$ref": "../common.json#/$defs/decimal"
+    },
+    "fee": {
+      "$ref": "../common.json#/$defs/decimal"
+    },
+    "fee_asset": {
+      "type": "string"
+    },
+    "liquidity": {
+      "type": "string",
+      "enum": [
+        "maker",
+        "taker"
+      ]
+    },
+    "fill_grade": {
+      "anyOf": [
+        {
+          "$ref": "../common.json#/$defs/fill_grade"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Simulated fills only; null for real venue fills"
+    },
+    "is_shadow": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "fil_id",
+    "ord_id",
+    "run_id",
+    "ts_ms",
+    "price",
+    "qty",
+    "fee",
+    "fee_asset",
+    "liquidity",
+    "fill_grade",
+    "is_shadow"
+  ]
+}

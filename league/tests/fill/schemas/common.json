@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.aitrading.invalid/common.json",
+  "title": "Common definitions (interfaces v1 §1–2)",
+  "$defs": {
+    "ts_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "UTC epoch milliseconds"
+    },
+    "decimal": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+      "description": "Decimal number as string (orders, ledger, payments). Never a float."
+    },
+    "venue": {
+      "type": "string",
+      "enum": [
+        "hyperliquid",
+        "binance_usdm",
+        "toobit_usdtm",
+        "lighter",
+        "bybit_linear",
+        "bitget_usdtm",
+        "composite",
+        "bea",
+        "fomc",
+        "bls",
+        "gdelt",
+        "fed",
+        "ecb",
+        "decrypt",
+        "cointelegraph",
+        "bitcoinmagazine",
+        "cryptoslate"
+      ],
+      "description": "Data/execution venue or public source (bea, fomc, bls, gdelt). Additive: new values may be appended."
+    },
+    "grade": {
+      "type": "string",
+      "enum": [
+        "green",
+        "yellow",
+        "red",
+        ""
+      ],
+      "description": "Source grade; '' only in pre-v1 rows"
+    },
+    "market_type": {
+      "type": "string",
+      "enum": [
+        "PERP",
+        "SPOT"
+      ]
+    },
+    "instrument_id": {
+      "type": "string",
+      "pattern": "^[A-Z0-9]+-[A-Z0-9]+-(PERP|SPOT|FUT-[0-9]{8}|OPT-.+)$",
+      "description": "{base}-{quote}-{type}, e.g. BTC-USDC-PERP"
+    },
+    "side": {
+      "type": "string",
+      "enum": [
+        "buy",
+        "sell"
+      ]
+    },
+    "fill_grade": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B",
+        "C"
+      ]
+    },
+    "user_id": {
+      "type": "string",
+      "pattern": "^usr_[0-9A-HJKMNP-TV-Z]{26}$",
+      "description": "User"
+    },
+    "acc_id": {
+      "type": "string",
+      "pattern": "^acc_[0-9A-HJKMNP-TV-Z]{26}$",
+      "description": "Connected account"
+    },
+    "stg_id": {
+      "type": "string",
+      "pattern": "^stg_[0-9A-HJKMNP-TV-Z]{26}$",
+      "description": "Strategy"
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^run_[0-9A-HJKMNP-TV-Z]{26}$",
+      "description": "Backtest/paper/live/shadow run"
+    },
+    "ord_id": {
+      "type": "string",
+      "pattern": "^ord_[0-9A-HJKMNP-TV-Z]{26}$",
+      "description": "Order"
+    },
+    "fil_id": {
+      "type": "string",
+      "pattern": "^fil_[0-9A-HJKMNP-TV-Z]{26}$",
+      "description": "Fill"
+    },
+    "job_id": {
+      "type": "string",
+      "pattern": "^job_[0-9A-HJKMNP-TV-Z]{26}$",
+      "description": "Job"
+    }
+  }
+}
