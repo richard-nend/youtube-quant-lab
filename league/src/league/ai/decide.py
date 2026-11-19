@@ -54,13 +54,20 @@ def decide(team: str, now_ms: int, *, root: Path | None = None, caller=None, sto
         acct = json.loads((root / "state" / f"account_{team}.json").read_text())
     except (OSError, ValueError) as e:
         acct, err = None, f"account state unreadable: {e}"
+    use = {"model": None, "model_version": None, "tokens_in": 0, "tokens_out": 0}   # 재시도·재질문 포함 전체 합계
     if acct is not None:
-        kw = {"candles": candles} if candles else {}
-        prompt = render_prompt(build_brief(store or RawStore(root / "raw"), acct, _history(path.parent, utc), now_ms, **kw))
+        try:
+            kw = {"candles": candles} if candles else {}
+            prompt = render_prompt(build_brief(store or RawStore(root / "raw"), acct, _history(path.parent, utc), now_ms, **kw))
+        except Exception as e:
+            prompt, err = None, f"brief: {type(e).__name__}: {str(e)[:200]}"
         caller, p, reasked = caller or CALLERS[team], prompt, False
-        for _ in range(3):
+        for _ in range(3 if prompt else 0):
             try:
                 res = caller(p)
+                use["model"], use["model_version"] = res.model, res.model_version
+                use["tokens_in"] += res.tokens_in
+                use["tokens_out"] += res.tokens_out
                 d = parse_decision(res.text, team, utc)
             except ValueError as e:   # 형식 오류: 한 번만 재질문
                 err = f"format: {e}"
@@ -70,9 +77,9 @@ def decide(team: str, now_ms: int, *, root: Path | None = None, caller=None, sto
             except Exception as e:
                 err = f"call: {type(e).__name__}: {str(e)[:200]}"
                 continue
-            out, err = {**d, "model": res.model, "model_version": res.model_version,
-                        "tokens_in": res.tokens_in, "tokens_out": res.tokens_out}, ""
+            out, err = d, ""
             break
+    out.update({k: v for k, v in use.items() if v or k.startswith("tokens")})
     if err:
         out["error"] = err
     tmp = path.with_suffix(".tmp")

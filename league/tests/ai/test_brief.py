@@ -40,3 +40,8 @@ def test_prompt_same_for_all_teams_and_korean(tmp_path):
     p = render_prompt(b)
     assert p == render_prompt(b)
     assert "JSON" in p and "reason" in p and "한국어" in p
+
+
+def test_rules_text(tmp_path):
+    r = build_brief(make_store(tmp_path), {}, [], NOW, candles=fake_candles)["rules"]
+    assert "4시간마다" in r and "3배" in r and "합계" in r and "매시간" not in r

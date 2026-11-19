@@ -12,8 +12,8 @@ from ..venues import CFG, TOOBIT
 
 SYMBOLS = {"BTC": ("BTC-SWAP-USDT", "BTCUSDT"), "ETH": ("ETH-SWAP-USDT", "ETHUSDT")}
 CTX_WINDOW_MS, BOOK_WINDOW_MS, LIQ_WINDOW_MS = 3_600_000, 600_000, 3_600_000
-RULES = (f"BTC·ETH 무기한 선물만 거래한다. 종목별 명목 노출 합계는 순자산의 300%까지. 시장가 수수료 {float(CFG['taker']) * 100:.2f}%, "
-         f"지정가 {float(CFG['maker']) * 100:.2f}%. 매시간 한 번 판단하고, 판단 사이에는 손절·익절 주문만 작동한다. "
+RULES = (f"BTC·ETH 무기한 선물만 거래한다. BTC+ETH 명목 노출 합계가 순자산의 3배(300%)를 넘을 수 없다. 시장가 수수료 {float(CFG['taker']) * 100:.2f}%, "
+         f"지정가 {float(CFG['maker']) * 100:.2f}%. 4시간마다 한 번 판단하고, 판단 사이에는 손절·익절 주문만 작동한다. "
          "손절/익절 가격은 마크가격 기준이다.")
 
 

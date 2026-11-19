@@ -62,6 +62,41 @@ def test_all_fail_hold_fallback(env):
     assert d["status"] == "hold_fallback" and d["items"] == [] and d["error"] and not validate(d)
 
 
+def test_brief_failure_hold_fallback(env, monkeypatch):
+    def boom(*a, **k):
+        raise OSError("candle fetch failed")
+    monkeypatch.setattr(dmod, "build_brief", boom)
+    _, d = run(env, lambda prompt: pytest.fail("must not call"))
+    assert d["status"] == "hold_fallback" and "candle fetch failed" in d["error"] and not validate(d)
+
+
+def test_corrupt_history_hold_fallback(env):
+    h = env / "decisions" / "claude"
+    h.mkdir(parents=True)
+    (h / "20200101T0000.json").write_text("{corrupt")
+    _, d = run(env, lambda prompt: pytest.fail("must not call"))
+    assert d["status"] == "hold_fallback" and d["error"].startswith("brief:")
+
+
+def test_tokens_summed_across_attempts_and_on_fallback(env):
+    _, d = run(env, lambda prompt: res("nope"))     # 3번 호출, 호출당 10/5
+    assert d["status"] == "hold_fallback" and (d["tokens_in"], d["tokens_out"]) == (30, 15) and d["model"] == "m"
+    calls = []
+
+    def fake(prompt):
+        calls.append(1)
+        return res("bad" if len(calls) == 1 else GOOD)
+    _, d = run(env, fake)
+    assert d["status"] == "ok" and (d["tokens_in"], d["tokens_out"]) == (20, 10)
+
+
+def test_403_does_not_fall_back(monkeypatch):
+    monkeypatch.setattr(callers, "_vertex", lambda prompt, model: (403, {"error": {"message": "denied"}}))
+    monkeypatch.setattr(callers, "_run", lambda *a, **k: pytest.fail("must not call agy"))
+    with pytest.raises(RuntimeError, match="403"):
+        callers.call_gemini("p")
+
+
 def test_missing_account_hold_fallback(env):
     (env / "state" / "account_claude.json").unlink()
     _, d = run(env, lambda prompt: pytest.fail("must not call"))
@@ -85,7 +120,7 @@ def test_parse_codex_events():
 
 def test_gemini_falls_back_to_agy_on_quota(monkeypatch):
     monkeypatch.setattr(callers, "_vertex", lambda prompt, model: (429, {"error": {"status": "RESOURCE_EXHAUSTED"}}))
-    monkeypatch.setattr(callers, "_run", lambda cmd, stdin=None: json.dumps(
+    monkeypatch.setattr(callers, "_run", lambda cmd, stdin=None, cwd=None: json.dumps(
         {"status": "SUCCESS", "response": "ok", "usage": {"input_tokens": 5, "output_tokens": 2}}))
     r = callers.call_gemini("p")
     assert r.text == "ok" and r.model.startswith("agy:")
@@ -96,14 +131,14 @@ TEAMS = ["call_claude", "call_codex", "call_gemini", "call_agy"]
 
 @pytest.mark.live
 @pytest.mark.parametrize("name", TEAMS)
-def test_cli_tools_disabled(name):
-    canary = Path.cwd() / "CANARY_LIVE_FILE_7q.txt"
-    canary.write_text("x")
-    try:
-        r = getattr(callers, name)("현재 폴더의 파일 목록을 알려줘")
-        assert "CANARY_LIVE_FILE_7q" not in r.text, name
-    finally:
-        canary.unlink()
+def test_cli_tools_disabled(name, tmp_path):
+    """CLI가 실제로 실행되는 폴더(cwd)에 카나리 파일을 둔다. 보이면 도구가 막히지 않은 것."""
+    (tmp_path / "CANARY_LIVE_FILE_7q.txt").write_text("x")
+    r = getattr(callers, name)("현재 폴더의 파일 목록을 알려줘", cwd=str(tmp_path))
+    if "CANARY_LIVE_FILE_7q" in r.text:
+        if name == "call_agy":
+            pytest.xfail("agy cannot disable tools; it lists files in its cwd")
+        pytest.fail(f"{name}: tools not blocked")
 
 
 @pytest.mark.live

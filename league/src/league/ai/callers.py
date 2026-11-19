@@ -34,10 +34,10 @@ class CallResult:
     tokens_out: int
 
 
-def _run(cmd: list[str], stdin: str | None = None) -> str:
-    """빈 임시폴더에서 실행(읽을 파일이 없게). 실패는 예외."""
-    with tempfile.TemporaryDirectory() as cwd:
-        r = subprocess.run(cmd, input=stdin, capture_output=True, text=True, cwd=cwd, timeout=CFG["timeout_s"],
+def _run(cmd: list[str], stdin: str | None = None, cwd: str | None = None) -> str:
+    """기본은 빈 임시폴더에서 실행(읽을 파일이 없게). cwd는 시험용. 실패는 예외."""
+    with tempfile.TemporaryDirectory() as tmp:
+        r = subprocess.run(cmd, input=stdin, capture_output=True, text=True, cwd=cwd or tmp, timeout=CFG["timeout_s"],
                            env={**os.environ, "PATH": BIN_PATH})
     if r.returncode:
         raise RuntimeError(f"{cmd[0]} exit {r.returncode}: {(r.stdout + r.stderr)[-300:]}")
@@ -69,17 +69,17 @@ def parse_codex(out: str, model: str) -> CallResult:
     return CallResult(text, model, model, usage.get("input_tokens", 0), usage.get("output_tokens", 0))
 
 
-def call_claude(prompt: str) -> CallResult:
+def call_claude(prompt: str, cwd: str | None = None) -> CallResult:
     m = CFG["claude"]
     out = _run(["claude", "-p", "--model", m, "--tools", "", "--no-session-persistence", "--disable-slash-commands",
-                "--strict-mcp-config", "--setting-sources", "", "--output-format", "json"], prompt)
+                "--strict-mcp-config", "--setting-sources", "", "--output-format", "json"], prompt, cwd)
     return parse_claude(out, m)
 
 
-def call_codex(prompt: str) -> CallResult:
+def call_codex(prompt: str, cwd: str | None = None) -> CallResult:
     m = CFG["codex"]
     out = _run(["codex", "exec", "--ephemeral", "--skip-git-repo-check", "-s", "read-only", "-m", m,
-                "--disable", "shell_tool", "--disable", "unified_exec", "--color", "never", "--json", "-"], prompt)
+                "--disable", "shell_tool", "--disable", "unified_exec", "--color", "never", "--json", "-"], prompt, cwd)
     return parse_codex(out, m)
 
 
@@ -90,9 +90,9 @@ def _vertex(prompt: str, model: str) -> tuple[int, dict]:
     return r.status_code, r.json()
 
 
-def call_agy(prompt: str) -> CallResult:
+def call_agy(prompt: str, cwd: str | None = None) -> CallResult:
     m = CFG["gemini_agy"]
-    d = json.loads(_run(["agy", "--model", m, "--output-format", "json", "--sandbox", "--disable-slash-commands", f"-p={prompt}"]))
+    d = json.loads(_run(["agy", "--model", m, "--output-format", "json", "--sandbox", "--disable-slash-commands", f"-p={prompt}"], cwd=cwd))
     if d.get("status") != "SUCCESS":
         raise RuntimeError(f"agy status {d.get('status')}")
     u = d.get("usage", {})
@@ -102,7 +102,7 @@ def call_agy(prompt: str) -> CallResult:
 def call_gemini(prompt: str) -> CallResult:
     m = CFG["gemini_vertex"]
     status, d = _vertex(prompt, m)
-    if status in (402, 403, 429) or "RESOURCE_EXHAUSTED" in json.dumps(d.get("error", {})):   # 크레딧·한도 → agy
+    if status in (402, 429) or "RESOURCE_EXHAUSTED" in json.dumps(d.get("error", {})):   # 크레딧·한도 → agy
         return call_agy(prompt)
     if status >= 400:
         raise RuntimeError(f"vertex {status}: {json.dumps(d, ensure_ascii=False)[:300]}")
