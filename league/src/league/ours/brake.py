@@ -26,6 +26,27 @@ def load_pool() -> pd.DataFrame:
     return rows
 
 
+META = PATH.with_name("brake_meta.json")
+
+
+def write_meta(pkl: Path, threshold: float, pool_rows: int, meta: Path = META) -> Path:
+    """git에 올리는 동결 기록: 임계값, 적합 시각, 라이브러리 판본, pkl sha256(pkl 자체는 pickle이라 판본이 바뀌면 못 읽을 수 있다)."""
+    import hashlib
+    import json
+    import platform
+    from datetime import datetime, timezone
+    from importlib.metadata import version
+
+    meta.write_text(json.dumps({
+        "threshold": threshold, "quantile": Q, "pool_rows": pool_rows,
+        "fit_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "sha256": hashlib.sha256(Path(pkl).read_bytes()).hexdigest(),
+        "versions": {"python": platform.python_version(),
+                     **{k: version(k) for k in ("numpy", "pandas", "scikit-learn", "lightgbm")}},
+    }, indent=1) + "\n")
+    return meta
+
+
 class Brake:
     def __init__(self, tree, med, scaler, logit, cols, threshold):
         self.tree, self.med, self.scaler, self.logit, self.cols, self.threshold = tree, med, scaler, logit, cols, threshold
@@ -62,5 +83,7 @@ class Brake:
 
 if __name__ == "__main__":
     # -m 으로 돌면 이 파일은 __main__ 이라 pickle 이 __main__.Brake 를 가리킨다 → 데몬에서 못 읽음. 패키지 쪽 클래스로 저장.
-    from league.ours.brake import Brake as PkgBrake, load_pool as pkg_pool
-    print("threshold", PkgBrake.fit_frozen(pkg_pool(), PATH).threshold, "->", PATH)
+    from league.ours.brake import Brake as PkgBrake, load_pool as pkg_pool, write_meta as pkg_meta
+    pool = pkg_pool()
+    thr = PkgBrake.fit_frozen(pool, PATH).threshold
+    print("threshold", thr, "->", PATH, pkg_meta(PATH, thr, len(pool)))
