@@ -192,7 +192,7 @@ def test_unfilled_limit_entry_cancelled_at_limit_ttl(tmp_path):
     run(d, T0 + 5_000, 5)
     expire = hour - H + 21 * H                        # FVG-1h limit_ttl 20: 신호 봉 다음 20개 봉 마감까지
     run(d, expire - 120_000, 65)
-    assert len(d.lg.view("ours").open_orders(BTC)) == 3
+    assert [o.req.type for o in d.lg.view("ours").open_orders(BTC)] == ["limit"]   # 체결 전: 손절·익절 없음
     run(d, expire + 1_000, 65)
     assert d.lg.view("ours").open_orders(BTC) == [] and d.lg.view("ours").position(BTC) == 0
     assert d.st["ours_open"] == {}
@@ -213,3 +213,45 @@ def test_position_closed_at_max_hold(tmp_path):
     run(d, close + 1_000, 65)
     assert d.lg.view("ours").position(BTC) == 0 and d.lg.view("ours").open_orders(BTC) == []
     assert d.st["ours_open"] == {}
+
+
+def test_legs_placed_after_limit_fill_and_replaced_if_cancelled(tmp_path):
+    hour = T0 // H * H
+    s = sig()
+    s.entry, s.limit_price, s.signal_time = "limit", 90.0, pd.Timestamp(hour - H, unit="ms", tz="UTC")
+    d = dm.Daemon(tmp_path, repo=tmp_path, brake=FakeBrake())
+    run(d, T0, 5)
+    d.run_hour(hour, [s])
+    run(d, T0 + 5_000, 10)
+    v = d.lg.view("ours")
+    assert [o.req.type for o in v.open_orders(BTC)] == ["limit"] and v.position(BTC) == 0
+    t = T0 + 20_000
+    for i in range(5):                                # 매도 호가가 지정가 아래로 → 체결
+        ts = t + i * 1000
+        d.on_record(BookSnapshot(ts, TOOBIT, "BTC-SWAP-USDT", [[88.0, 500.0]], [[89.0, 500.0]], ts))
+        d.on_record(Trade(ts + 1, TOOBIT, "BTC-SWAP-USDT", 89.0, 0.01, "sell", f"x{ts}", ts + 1))
+        d.tick(ts)
+    run(d, t + 5_000, 8)
+    assert v.position(BTC) > 0
+    legs = {o.req.type: o for o in v.open_orders(BTC)}
+    assert set(legs) == {"stop_market", "take_profit_market"} and all(o.req.reduce_only for o in legs.values())
+    d.lg.submit("ours", [dm.Cancel(ord_id=legs["stop_market"].ord_id)])   # 손절이 어떤 이유로 사라짐
+    run(d, t + 13_000, 8)
+    assert {o.req.type for o in v.open_orders(BTC)} == {"stop_market", "take_profit_market"}
+
+
+def test_failing_job_does_not_stop_tick_and_day_advances(tmp_path, monkeypatch):
+    d = dm.Daemon(tmp_path, repo=tmp_path)
+    day = T0 // 86_400_000 * 86_400_000
+    run(d, day - 3_000, 2)
+    (tmp_path / "decisions" / "claude").mkdir(parents=True)
+    (tmp_path / "decisions" / "claude" / "20270115T0000.json").write_text("{corrupt")
+    boom = lambda *a: (_ for _ in ()).throw(RuntimeError("boom"))
+    monkeypatch.setattr(d, "time_exits", boom)
+    run(d, day + 5_000, 3)                            # 손상 판단 파일 + 실패하는 작업에도 tick 은 계속
+    assert d.st["board_day"] == dm._utc(day, "%Y-%m-%d")
+    assert (tmp_path / "league" / "public" / "scoreboard.json").exists()
+    monkeypatch.setattr(d, "scoreboard", boom)
+    run(d, day + 86_400_000 + 5_000, 3)
+    assert d.st["board_day"] == dm._utc(day + 86_400_000, "%Y-%m-%d")   # 성적판이 실패해도 날짜는 넘어간다
+    assert (tmp_path / "state" / "account_claude.json").exists()

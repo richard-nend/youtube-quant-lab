@@ -123,8 +123,16 @@ class Daemon:
         log.info("restored snapshot at %s, replayed %d events", self.lg.last_ts, self.stats["events"] - n)
 
     # ---------- 시계 ----------
+    def _job(self, name: str, fn, *a):
+        """예약 작업 하나의 실패가 데몬을 죽이지 않게(죽으면 launchd 재시작 → 같은 실패 반복)."""
+        try:
+            return fn(*a)
+        except Exception:
+            log.exception("job %s failed", name)
+
     def tick(self, now: int) -> None:
-        self._drain(now - LAG_MS)
+        self._job("drain", self._drain, now - LAG_MS)
+        self._job("legs", self.place_legs)
         if self.st.get("start_mid") is None and self._mid():
             self.st["start_mid"] = str(self._mid())
             self._save()
@@ -134,9 +142,9 @@ class Daemon:
             self._minute(now)
         day = _utc(now, "%Y-%m-%d")
         if self.st.get("board_day") != day:
-            if self.st.get("board_day") is not None:
-                self.scoreboard()
-            self.st["board_day"] = day
+            prev, self.st["board_day"] = self.st.get("board_day"), day   # 실패해도 날짜는 넘긴다(재시작 때 반복 안 함)
+            if prev is not None:
+                self._job("scoreboard", self.scoreboard)
             self._save()
 
     def _minute(self, now: int) -> None:
@@ -144,10 +152,9 @@ class Daemon:
             self.store.flush()
         except Exception:
             log.exception("raw flush failed (rows kept in memory)")
-        self.apply_decisions()
-        self.time_exits(now)
-        self.write_accounts(now)
-        self.update_results()
+        for name, fn, a in (("decisions", self.apply_decisions, ()), ("time_exits", self.time_exits, (now,)),
+                            ("accounts", self.write_accounts, (now,)), ("results", self.update_results, ())):
+            self._job(name, fn, *a)
         log.info("minute %s records=%d events=%d late=%d buffered=%d", _utc(now, "%H:%M"), self.stats["records"],
                  self.stats["events"], self.stats["late"], len(self.buf))
 
@@ -248,7 +255,7 @@ class Daemon:
             missed = [_utc(t, "%m-%d %H:00") for t in range(prev + H, hour, H)]
             log.warning("ours: missed %d hour(s) %s — no catch-up, their signals are not entered", len(missed), missed)
         for s in sigs or ():
-            self._enter(s)
+            self._job(f"enter {s.key}", self._enter, s)
         self.st["last_hour"] = hour
         self._save()
         self.snapshot()
@@ -279,19 +286,35 @@ class Daemon:
         side, ex = ("buy", "sell") if s.side > 0 else ("sell", "buy")
         tag = f"ours:{s.key}"
         kw = {"price": entry, "tif": "GTC"} if s.entry == "limit" else {}
+        # 손절·익절은 체결 뒤에 place_legs 가 낸다(무포지션 reduce-only 는 엔진이 취소; backtest 도 체결 봉부터 본다)
         self.lg.submit("ours", [Cancel(ord_id=o.ord_id) for o in mine] + [   # 지난 거래의 남은 손절·익절 정리
-            OrderRequest(iid, side, s.entry, qty, tag=tag, **kw),
-            OrderRequest(iid, ex, "stop_market", qty, trigger=Trigger(Decimal(str(s.stop)), "mark"), reduce_only=True, tag=tag),
-            OrderRequest(iid, ex, "take_profit_market", qty, trigger=Trigger(Decimal(str(s.target)), "mark"),
-                         reduce_only=True, tag=tag)])
+            OrderRequest(iid, side, s.entry, qty, tag=tag, **kw)])
         step, ttl, hold = sim_exits(s.candidate)
         sig_ms = int(s.signal_time.timestamp() * 1000)   # 신호 봉의 시작 시각(봉 index)
         self.st.setdefault("ours_open", {})[tag] = {
             "iid": iid, "step_ms": step, "max_hold": hold, "signal_ms": sig_ms,
+            "exit_side": ex, "qty": str(qty), "stop": str(s.stop), "target": str(s.target),
             # simulate: 지정가는 신호 다음 봉부터 limit_ttl 개 봉 안에 닿아야 체결 → 봉 (signal+ttl) 마감에 만료
             "expire_ms": sig_ms + (ttl + 1) * step if s.entry == "limit" else None}
         self._save()
         log.info("ours %s entered: %s %s %s (brake score %.3f)", s.key, side, qty, s.symbol, score)
+
+    def place_legs(self) -> None:
+        """포지션이 있는데 살아 있는 손절/익절이 없으면 (다시) 낸다. 수량 = 진입 주문 수량(reduce-only 라 포지션까지만 체결)."""
+        if self.lg.queues["ours"].pending:
+            return   # 낸 주문이 아직 엔진에 안 들어감
+        v, out = self.lg.view("ours"), []
+        for tag, t in self.st.get("ours_open", {}).items():
+            if not v.position(t["iid"]):
+                continue
+            live = {o.req.type for o in v.open_orders(t["iid"]) if o.req.tag == tag and o.req.reduce_only}
+            for typ, px in (("stop_market", t["stop"]), ("take_profit_market", t["target"])):
+                if typ not in live:
+                    out.append(OrderRequest(t["iid"], t["exit_side"], typ, Decimal(t["qty"]),
+                                            trigger=Trigger(Decimal(px), "mark"), reduce_only=True, tag=tag))
+                    log.info("ours %s: %s placed after fill", tag, typ)
+        if out:
+            self.lg.submit("ours", out)
 
     def time_exits(self, now: int) -> None:
         """backtest simulate 의 시간 규칙: 지정가 미체결 만료(limit_ttl), 보유 max_hold 봉 뒤 그 봉 마감에 시장가 청산.
@@ -353,12 +376,9 @@ class Daemon:
             subprocess.Popen(["/bin/zsh", str(self.repo / "league" / "deploy" / "publish.sh")])   # 기다리지 않는다
 
     def close(self) -> None:
-        """멈출 때: 남은 이벤트를 엔진에, 버퍼를 디스크에, 스냅샷."""
-        self._drain(2**62)
-        try:
-            self.store.flush()
-        except Exception:
-            log.exception("raw flush on stop failed")
+        """멈출 때: 버퍼를 디스크에(먼저), 남은 이벤트를 엔진에, 스냅샷."""
+        self._job("flush", self.store.flush)
+        self._job("drain", self._drain, 2**62)
         self._save()
         self.snapshot()
         log.info("stopped: records=%d events=%d late=%d", self.stats["records"], self.stats["events"], self.stats["late"])
@@ -370,10 +390,12 @@ async def run(d: Daemon, stop: asyncio.Event) -> None:
     try:
         while not stop.is_set():
             now = now_ms()
-            d.tick(now)
+            d._job("tick", d.tick, now)
             hour = d.due_hour(now)
             if hour is not None:   # 신호 계산은 스레드에서(수집은 계속), 주문은 이 루프에서
-                d.run_hour(hour, await asyncio.to_thread(d.fetch_signals, hour))
+                sigs = await asyncio.to_thread(d.fetch_signals, hour)
+                d._job("run_hour", d.run_hour, hour, sigs)
+                d.st["last_hour"] = hour   # 실패한 회차를 매초 다시 돌지 않게
             try:
                 await asyncio.wait_for(stop.wait(), 1.0)
             except TimeoutError:

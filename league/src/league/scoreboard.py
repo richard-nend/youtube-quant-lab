@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import csv
 import json
+import logging
 import re
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -10,6 +11,8 @@ from pathlib import Path
 
 from .core import League
 from .venues import CFG
+
+log = logging.getLogger(__name__)
 
 START = Decimal(5000)
 TAKER = Decimal(CFG["taker"])
@@ -22,11 +25,22 @@ def baseline_equity(mid_t: Decimal, mid_0: Decimal, taker_fee: Decimal) -> Decim
 
 
 def _decisions(decisions_dir: Path, team: str) -> list[dict]:
-    return [json.loads(f.read_text()) for f in sorted((Path(decisions_dir) / team).glob("*.json"))]
+    """읽을 수 없거나 형태가 틀린 판단 파일은 건너뛰고 기록(성적판 하나 때문에 데몬이 죽지 않게)."""
+    out = []
+    for f in sorted((Path(decisions_dir) / team).glob("*.json")):
+        try:
+            d = json.loads(f.read_text())
+            if not (isinstance(d, dict) and isinstance(d.get("items"), list) and "status" in d and "decided_utc" in d):
+                raise ValueError("not a decision")
+        except (OSError, ValueError) as e:
+            log.warning("scoreboard: skip %s (%s)", f, e)
+            continue
+        out.append(d)
+    return out
 
 
 def _reason(d: dict) -> str:
-    return "; ".join(it["reason"] for it in d["items"] if it.get("reason")) or d.get("error", "")
+    return "; ".join(it["reason"] for it in d["items"] if isinstance(it, dict) and it.get("reason")) or d.get("error", "")
 
 
 def build_scoreboard(league: League, decisions_dir: Path, mids: dict) -> dict:

@@ -78,3 +78,14 @@ def test_write_public(tmp_path):
     assert rows and {"team", "ts_ms", "side", "price", "qty", "fill_grade"} <= set(rows[0])
     rs = [json.loads(x) for x in (p.parent / "reasons.jsonl").read_text().splitlines()]
     assert len(rs) == 3 and {"team", "decided_utc", "status", "reason"} <= set(rs[0])
+
+
+def test_corrupt_decision_files_are_skipped(tmp_path):
+    lg, d = make(tmp_path)
+    (d / "claude" / "20261119T0200.json").write_text("{not json")
+    (d / "gemini" / "20261119T0400.json").write_text('{"team": "gemini"}')     # 형태가 틀림
+    (d / "gemini" / "20261119T0800.json").write_text(json.dumps({"team": "gemini", "decided_utc": "20261119T0800",
+                                                                 "status": "ok", "items": ["x"]}))
+    b = build_scoreboard(lg, d, MIDS)
+    assert next(r for r in b["teams"] if r["team"] == "claude")["fail_count"] == 1
+    assert len([r for r in b["reasons"] if r["team"] == "claude"]) == 2
