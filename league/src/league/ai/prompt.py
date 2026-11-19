@@ -4,7 +4,9 @@ from __future__ import annotations
 from .brief import brief_json
 
 HEAD = """너는 BTC·ETH 무기한 선물을 모의 거래하는 트레이더다. 아래 시장 요약만 보고 지금 판단 한 번을 내려라.
-캔들 행은 [시작ms, 시가, 고가, 저가, 종가, 거래량], 오래된 것부터다. book_imbalance는 호가 상위 10단계 매수잔량/(매수+매도)이다.
+캔들 행은 [시작ms, 시가, 고가, 저가, 종가, 거래량], 오래된 것부터다. candles_4h_last_forming·candles_1h_last_forming이 true면
+그 목록의 마지막 봉은 아직 마감되지 않은(형성 중인) 봉이다. book_imbalance는 호가 상위 10단계 매수잔량/(매수+매도)이다.
+liquidations_1h는 청산 수집기가 없어 항상 null이다(청산이 없었다는 뜻이 아니다).
 
 출력은 JSON 객체 하나만, 다른 글자는 쓰지 마라(코드 블록도 쓰지 마라):
 {"items":[{"symbol":"BTC"|"ETH","action":"long"|"short"|"close"|"hold","notional_pct":0~300(순자산 대비 목표 노출 %),

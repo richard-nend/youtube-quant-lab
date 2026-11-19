@@ -10,12 +10,14 @@ from pathlib import Path
 
 from ..collect.store import RawStore
 from ..decision import validate
+from ..head import git_head
 from .brief import build_brief
 from .callers import call_claude, call_codex, call_gemini
 from .prompt import render_prompt, reask_prompt
 
 CALLERS = {"claude": call_claude, "gpt": call_codex, "gemini": call_gemini}
-BACKOFF_S = (30, 120)   # 호출 실패 뒤 대기(초): 3번 시도
+BACKOFF_S = (30, 120)
+ACCOUNT_MAX_AGE_MS = 10 * 60_000   # 계좌 파일은 매분 갱신   # 호출 실패 뒤 대기(초): 3번 시도
 DEFAULT_ROOT = Path(os.environ.get("LEAGUE_DATA", Path(__file__).resolve().parents[3] / "data"))
 
 
@@ -47,21 +49,32 @@ def _history(dec_dir: Path, utc: str) -> list[dict]:
     return out[::-1]
 
 
+def _account(root: Path, team: str, now_ms: int) -> tuple[dict | None, str]:
+    try:
+        acct = json.loads((root / "state" / f"account_{team}.json").read_text())
+        asof = datetime.strptime(acct["as_of_utc"], "%Y-%m-%dT%H:%MZ").replace(tzinfo=timezone.utc).timestamp() * 1000
+    except (OSError, ValueError, KeyError, TypeError) as e:
+        return None, f"account state unreadable: {e}"
+    if now_ms - asof > ACCOUNT_MAX_AGE_MS:   # 데몬이 멈췄다: 옛 계좌로 판단하지 않는다
+        return None, f"account state stale (as of {acct['as_of_utc']})"
+    return acct, ""
+
+
 def decide(team: str, now_ms: int, *, root: Path | None = None, caller=None, store=None, candles=None,
-           sleep=time.sleep) -> Path:
+           sleep=time.sleep, markets=None) -> Path:
+    """markets = 회차에서 한 번 만든 시장 요약(세 팀 공통). 예외 객체면 그 회차 요약 실패 → 유지."""
     root = Path(root or DEFAULT_ROOT)
     utc = datetime.fromtimestamp(now_ms / 1000, timezone.utc).strftime("%Y%m%dT%H%M")
     path = root / "decisions" / team / f"{utc}.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     out, err = {"team": team, "decided_utc": utc, "status": "hold_fallback", "items": []}, ""
-    try:
-        acct = json.loads((root / "state" / f"account_{team}.json").read_text())
-    except (OSError, ValueError) as e:
-        acct, err = None, f"account state unreadable: {e}"
+    acct, err = _account(root, team, now_ms)
     use = {"model": None, "model_version": None, "tokens_in": 0, "tokens_out": 0}   # 재시도·재질문 포함 전체 합계
     if acct is not None:
         try:
-            kw = {"candles": candles} if candles else {}
+            if isinstance(markets, Exception):
+                raise markets
+            kw = {k: v for k, v in (("candles", candles), ("markets", markets)) if v is not None}
             prompt = render_prompt(build_brief(store or RawStore(root / "raw"), acct, _history(path.parent, utc), now_ms, **kw))
         except Exception as e:
             prompt, err = None, f"brief: {type(e).__name__}: {str(e)[:200]}"
@@ -86,6 +99,7 @@ def decide(team: str, now_ms: int, *, root: Path | None = None, caller=None, sto
                     break
                 reasked, p = True, reask_prompt(prompt, str(e)[:200])
     out.update({k: v for k, v in use.items() if v or k.startswith("tokens")})
+    out["code_head"] = git_head()
     if err:
         out["error"] = err
     tmp = path.with_suffix(".tmp")

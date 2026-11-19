@@ -53,3 +53,19 @@ def test_mark_only_rows_do_not_hide_funding(tmp_path):
     s.flush()
     btc = build_brief(s, {}, [], NOW, candles=fake_candles)["markets"]["BTC"]
     assert btc["mark_price"] == 101.0 and btc["funding_rate"] == 0.0001 and btc["open_interest"] == 777.0
+
+
+def test_liquidations_null_and_forming_bar_labelled(tmp_path):
+    b = build_brief(make_store(tmp_path), {}, [], NOW, candles=fake_candles)
+    btc = b["markets"]["BTC"]
+    assert btc["liquidations_1h"] is None                 # 바이낸스 청산 수집기가 없다: 0이 아니라 없음
+    assert btc["candles_4h_last_forming"] is True         # 마지막 봉 시작 NOW-1h: 4시간봉은 아직 형성 중
+    assert btc["candles_1h_last_forming"] is False        # 1시간봉은 NOW에 마감
+    p = render_prompt(b)
+    assert "liquidations_1h" in p and "null" in p and "last_forming" in p
+
+
+def test_forming_flag_false_when_last_bar_closed(tmp_path):
+    closed = lambda s, i, n: [[NOW - (n - k + 1) * 3_600_000 * (4 if i == "4h" else 1), 1, 1, 1, 1, 1] for k in range(n)]
+    btc = build_brief(make_store(tmp_path), {}, [], NOW, candles=closed)["markets"]["BTC"]
+    assert btc["candles_1h_last_forming"] is False and btc["candles_4h_last_forming"] is False

@@ -18,7 +18,7 @@ def res(text):
 @pytest.fixture
 def env(tmp_path, monkeypatch):
     (tmp_path / "state").mkdir()
-    (tmp_path / "state" / "account_claude.json").write_text(json.dumps({"equity": 5000}))
+    (tmp_path / "state" / "account_claude.json").write_text(json.dumps({"equity": 5000, "as_of_utc": "2027-01-15T08:00Z"}))
     monkeypatch.setattr(dmod, "build_brief", lambda store, account, history, now_ms, **k: {"account": account, "history": history})
     monkeypatch.setattr(dmod, "render_prompt", lambda b: "PROMPT")
     return tmp_path
@@ -235,3 +235,10 @@ def test_equal_reasoning_level_pinned_for_all_teams(monkeypatch):
     assert agy[agy.index("--model") + 1] == "gemini-4-argon-high"
     assert callers.vertex_body("p")["generationConfig"]["thinkingConfig"]["thinkingLevel"] == "HIGH"
     assert callers.CFG["gemini_vertex"] == "gemini-4-argon"
+
+
+def test_stale_account_holds(env):
+    """데몬이 멈춰 계좌 파일이 오래되면 옛 계좌로 판단하지 않고 유지."""
+    (env / "state" / "account_claude.json").write_text(json.dumps({"equity": 5000, "as_of_utc": "2027-01-15T07:40Z"}))
+    _, d = run(env, lambda prompt: pytest.fail("must not call"))
+    assert d["status"] == "hold_fallback" and "stale" in d["error"]
