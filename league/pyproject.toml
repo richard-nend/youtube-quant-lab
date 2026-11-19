@@ -28,3 +28,5 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+addopts = "-m 'not live'"
+markers = ["live: real model CLI/API calls (cost money); run with -m live"]
