@@ -1,0 +1,27 @@
+{
+ "symbol": "BTC-SWAP-USDT",
+ "symbolName": "BTC-SWAP-USDT",
+ "topic": "trade",
+ "params": {
+  "realtimeInterval": "24h",
+  "binary": "false"
+ },
+ "data": [
+  {
+   "v": "4900197869802985164",
+   "t": 1792969290246,
+   "p": "80405.1",
+   "q": "0.3",
+   "m": false
+  },
+  {
+   "v": "4900197869802985165",
+   "t": 1792969290556,
+   "p": "80405.2",
+   "q": "2.7",
+   "m": true
+  }
+ ],
+ "f": true,
+ "sendTime": 1792969306641
+}

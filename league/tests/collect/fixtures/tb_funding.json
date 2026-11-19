@@ -1,0 +1,11 @@
+[
+ {
+  "symbol": "BTC-SWAP-USDT",
+  "rate": "0.00002917",
+  "period": "8H",
+  "nextFundingTime": "1792972800000",
+  "interest": "0.0001",
+  "fundingRateCap": "0.0024",
+  "fundingRateFloor": "-0.0024"
+ }
+]
