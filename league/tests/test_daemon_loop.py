@@ -298,3 +298,31 @@ def test_ai_limit_entry_gets_stop_and_tp_after_fill(tmp_path):
     d.close()
     d2 = dm.Daemon(tmp_path, repo=tmp_path)           # 다리 정보는 상태 파일에 남는다
     assert d2.st["ai_legs"]["claude"]["BTC"]["stop"] == "80.0"
+
+
+def test_slow_ctx_poll_is_not_dropped_late(tmp_path):
+    """리뷰 I2: Toobit 마크 시각이 엔진 시계보다 10초 늦어도(느린 조회) 받은 시각으로 들어가 버려지지 않는다."""
+    d = dm.Daemon(tmp_path, repo=tmp_path)
+    run(d, T0, 20)
+    d.on_record(MarketCtx(T0 + 5_000, TOOBIT, "BTC-SWAP-USDT", T0 + 20_000, mark_price=99.7))
+    run(d, T0 + 20_000, 5)
+    assert d.stats["late"] == 0 and d.lg.engines["ours"].mark_of(BTC) in (Decimal("99.7"), Decimal("99.5"))
+    assert d.lg.engines["ours"].market(BTC).ctx_ts >= T0 + 20_000
+
+
+def test_stop_fires_within_seconds_of_mark_cross(tmp_path):
+    """1초 마크 조회 흐름에서 마크가 손절가를 지나면 몇 초 안에 포지션이 닫힌다."""
+    d = dm.Daemon(tmp_path, repo=tmp_path, brake=FakeBrake())
+    run(d, T0, 5)
+    d.run_hour(T0 // H * H, [sig()])                  # 손절 98
+    run(d, T0 + 5_000, 5)
+    assert d.lg.view("ours").position(BTC) > 0
+    t = T0 + 10_000
+    for i in range(10):
+        ts = t + i * 1000
+        px = 99.5 if i < 3 else 97.0                  # 3초째 마크가 손절가 아래로
+        d.on_record(BookSnapshot(ts, TOOBIT, "BTC-SWAP-USDT", [[px - 0.5, 500.0]], [[px + 0.5, 500.0]], ts))
+        d.on_record(MarketCtx(ts - 30_000, TOOBIT, "BTC-SWAP-USDT", ts, mark_price=px))   # 거래소 시각은 30초 늦게 찍혀도
+        d.tick(ts + dm.LAG_MS)
+        if i == 7:
+            assert d.lg.view("ours").position(BTC) == 0, "stop did not fire within 4 s of the cross"

@@ -45,3 +45,11 @@ def test_prompt_same_for_all_teams_and_korean(tmp_path):
 def test_rules_text(tmp_path):
     r = build_brief(make_store(tmp_path), {}, [], NOW, candles=fake_candles)["rules"]
     assert "4시간마다" in r and "3배" in r and "합계" in r and "매시간" not in r
+
+
+def test_mark_only_rows_do_not_hide_funding(tmp_path):
+    s = make_store(tmp_path)
+    s.append(MarketCtx(NOW - 500, TOOBIT, "BTC-SWAP-USDT", NOW - 500, mark_price=101.0))   # 1초 마크 조회 행
+    s.flush()
+    btc = build_brief(s, {}, [], NOW, candles=fake_candles)["markets"]["BTC"]
+    assert btc["mark_price"] == 101.0 and btc["funding_rate"] == 0.0001 and btc["open_interest"] == 777.0

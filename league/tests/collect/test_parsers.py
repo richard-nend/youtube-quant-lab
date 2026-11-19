@@ -77,3 +77,21 @@ def test_toobit_ctx():
 def test_toobit_contracts():
     tb = tbm.parse_contracts(load("tb_exchange_info"), 1)[0]
     assert tb.contract_multiplier == 0.001 and tb.max_leverage == 200 and tb.asset == "BTC"
+
+
+def test_toobit_mark_poller_fast_and_per_symbol(monkeypatch):
+    """리뷰 I2: 마크는 1~2초마다 종목별로 따로 낸다(8번 연속 조회가 끝날 때까지 기다리지 않는다)."""
+    import asyncio
+    out = []
+    c = tbm.ToobitUsdtmCollector(CollectorSpec("toobit_usdtm", ("BTCUSDT", "ETHUSDT")), out.append)
+    marks = [p for p in c.pollers() if isinstance(p, tuple) and p[0].__name__ == "poll_mark"]
+    assert marks and marks[0][1] <= 2
+
+    async def fake_get(cl, path, **params):
+        assert path == "/quote/v1/markPrice"
+        out.append(("got", params["symbol"]))
+        return {"symbol": params["symbol"], "price": "100.5", "time": 1}
+    monkeypatch.setattr(c, "_get", fake_get)
+    asyncio.run(marks[0][0]())
+    assert [type(x).__name__ if not isinstance(x, tuple) else x[0] for x in out] == ["got", "MarketCtx", "got", "MarketCtx"]
+    assert out[1].mark_price == 100.5 and out[1].funding_rate is None and out[1].recv_ms > 1

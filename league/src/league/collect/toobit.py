@@ -8,7 +8,7 @@
   - trade: data [{"v"(id),"t","p","q","m"}], m=true 면 매수자가 메이커 → 매도 공격
   - depth: data [{"s","t","b":[[p,q]],"a":[[p,q]]}] (스냅샷)
   - markPrice 토픽은 빈 데이터만 와서 REST로 조회
-- REST https://api.toobit.com: /quote/v1/markPrice, /api/v1/futures/fundingRate(period "8H"),
+- REST https://api.toobit.com: /quote/v1/markPrice(1초마다 따로, 손절·청산 판정용), /api/v1/futures/fundingRate(period "8H"),
   /quote/v1/openInterest, /quote/v1/index?symbol=BTCUSDT, /api/v1/exchangeInfo(contracts)
 - 단위: 체결·호가 수량은 **계약 수**(BTC 1계약 = contractMultiplier 0.001 BTC) → 코인으로 환산해 저장.
   1분봉 거래량×가격 ≈ 거래대금으로 확인. openInterest의 size는 코인 단위로 판단(BTC 약 3만 개 ≈ 24시간
@@ -67,6 +67,12 @@ def parse_ctx(symbol: str, mark: dict, funding: dict, oi: dict, index: dict, rec
         next_funding_ms=int(nf) if nf else None, funding_interval_h=parse_period_h(funding.get("period")),
         **_ident(symbol),
     )
+
+
+def parse_mark(symbol: str, mark: dict, recv: int) -> MarketCtx:
+    """마크만 담은 ctx(펀딩·OI 없음). 1초 조회용."""
+    return MarketCtx(ts_ms=int(mark.get("time") or recv), venue=VENUE, symbol=symbol, recv_ms=recv,
+                     mark_price=f(mark.get("price")), **_ident(symbol))
 
 
 def parse_contracts(info: dict, recv: int) -> list[Record]:
@@ -150,18 +156,21 @@ class ToobitUsdtmCollector(VenueCollector):
     def pollers(self):
         async def poll_ctx():
             async with httpx.AsyncClient(base_url=REST, timeout=10) as c:
-                recs = []
-                for s in self.syms:
+                for s in self.syms:   # 종목마다 바로 낸다
                     mark = await self._get(c, "/quote/v1/markPrice", symbol=s)
                     funding = (await self._get(c, "/api/v1/futures/fundingRate", symbol=s) or [{}])[0]
                     oi = await self._get(c, "/quote/v1/openInterest", symbol=s)
                     index = await self._get(c, "/quote/v1/index", symbol=s.replace("-SWAP-", ""))
-                    recs.append(parse_ctx(s, mark, funding, oi, index, now_ms()))
-                self.emit(recs)
+                    self.emit([parse_ctx(s, mark, funding, oi, index, now_ms())])
+
+        async def poll_mark():
+            async with httpx.AsyncClient(base_url=REST, timeout=5) as c:
+                for s in self.syms:
+                    self.emit([parse_mark(s, await self._get(c, "/quote/v1/markPrice", symbol=s), now_ms())])
 
         async def poll_instruments():
             async with httpx.AsyncClient(base_url=REST, timeout=30) as c:
                 self.emit(parse_contracts(await self._get(c, "/api/v1/exchangeInfo"), now_ms()))
 
         every = self.cfg.instruments_poll_seconds
-        return [poll_ctx, (poll_instruments, every, True)]
+        return [poll_ctx, (poll_mark, self.cfg.mark_poll_seconds), (poll_instruments, every, True)]

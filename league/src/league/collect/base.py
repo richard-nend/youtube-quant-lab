@@ -20,6 +20,7 @@ class CollectorSpec:
     book_depth: int = 20
     book_interval_ms: int = 1000
     ctx_poll_seconds: float = 60.0
+    mark_poll_seconds: float = 1.0   # 마크만 따로 자주(손절·익절·청산 판정용)
     instruments_poll_seconds: float = 86400.0
 
 

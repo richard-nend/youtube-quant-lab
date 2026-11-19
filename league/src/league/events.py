@@ -18,7 +18,8 @@ def to_engine_event(rec: Record) -> BookEvent | TradeEvent | CtxEvent | FundingE
     if isinstance(rec, Trade):
         return TradeEvent(rec.ts_ms, iid, rec.price, rec.size, rec.side)
     if isinstance(rec, MarketCtx):
-        return CtxEvent(rec.ts_ms, iid, mark=rec.mark_price, index=rec.index_price,
+        # 엔진 시각 = 받은 시각: Toobit 마크 시각은 조회 지연만큼 엔진 시계보다 과거라 늦은 이벤트로 버려질 수 있다(리뷰 I2)
+        return CtxEvent(rec.recv_ms, iid, mark=rec.mark_price, index=rec.index_price,
                         funding_rate=rec.funding_rate, next_funding_ms=rec.next_funding_ms,
                         funding_interval_h=rec.funding_interval_h)
     if isinstance(rec, Funding):

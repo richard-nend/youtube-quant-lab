@@ -44,10 +44,11 @@ def build_brief(store, account: dict, history: list[dict], now_ms: int, candles=
     markets = {}
     for name, (tb, bn) in SYMBOLS.items():
         rd = lambda venue, kind, sym, win: [r for r in store.read(venue, kind, now_ms - win, now_ms + 1) if r["symbol"] == sym]
-        ctx = _last([r for r in rd(TOOBIT, "ctx", tb, CTX_WINDOW_MS)])
+        rows = rd(TOOBIT, "ctx", tb, CTX_WINDOW_MS)
+        ctx = _last([r for r in rows if r.get("funding_rate") is not None])   # 1초 마크 행에는 펀딩·OI가 없다
         markets[name] = {
             "candles_4h": candles(tb, "4h", 60), "candles_1h": candles(tb, "1h", 48),
-            "mark_price": ctx.get("mark_price"), "funding_rate": ctx.get("funding_rate"), "open_interest": ctx.get("open_interest"),
+            "mark_price": _last(rows).get("mark_price"), "funding_rate": ctx.get("funding_rate"), "open_interest": ctx.get("open_interest"),
             "book_imbalance": _imbalance(_last(rd(TOOBIT, "book", tb, BOOK_WINDOW_MS))),
             "liquidations_1h": _liq(rd(BINANCE, "liquidations", bn, LIQ_WINDOW_MS)),
         }

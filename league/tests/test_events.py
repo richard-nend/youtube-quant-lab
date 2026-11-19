@@ -39,3 +39,9 @@ def test_binance_and_others_none():
     assert to_engine_event(Trade(5, "binance_usdm", "BTCUSDT", 1.0, 1.0, "buy", "1", 6)) is None
     assert to_engine_event(BookSnapshot(1, "binance_usdm", "BTCUSDT", [[1, 1]], [[2, 1]], 2)) is None
     assert to_engine_event(Candle(0, TOOBIT, "BTC-SWAP-USDT", "1m", 1, 1, 1, 1, 1, 1)) is None
+
+
+def test_ctx_engine_time_is_receive_time():
+    """리뷰 I2: Toobit 마크 시각(ts_ms)은 엔진 시계보다 늦게 올 수 있다 → 엔진에는 받은 시각으로."""
+    e = to_engine_event(MarketCtx(1_000, TOOBIT, "BTC-SWAP-USDT", 9_000, mark_price=100.0))
+    assert e.at_ms == 9_000 and e.mark == Decimal("100.0")
