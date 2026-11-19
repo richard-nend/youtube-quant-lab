@@ -43,7 +43,7 @@ def _reason(d: dict) -> str:
     return "; ".join(it["reason"] for it in d["items"] if isinstance(it, dict) and it.get("reason")) or d.get("error", "")
 
 
-def build_scoreboard(league: League, decisions_dir: Path, mids: dict) -> dict:
+def build_scoreboard(league: League, decisions_dir: Path, mids: dict, ops: dict | None = None) -> dict:
     """mids = {"start": BTC 중간가(시작), "now": BTC 중간가(지금)}. 반환의 trades/reasons는 write_public이 따로 쓴다."""
     rows, trades, reasons = [], [], []
     for team in league.teams:
@@ -70,6 +70,7 @@ def build_scoreboard(league: League, decisions_dir: Path, mids: dict) -> dict:
         "as_of_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "teams": rows,
         "baseline": {"team": "BTC 현물 1배 보유", "reference": True, "equity": str(be), "net_return": str(be / START - 1)},
+        "ops": ops or {},   # 운영 상태: 반복 실패하는 데몬 작업 등
         "trades": trades, "reasons": reasons,
     }
 

@@ -367,3 +367,67 @@ def test_stale_decision_not_applied(tmp_path, caplog):
         run(d, T0 + 5_000, 70)
     assert d.lg.view("claude").position(BTC) == 0 and "stale" in caplog.text
     assert "claude:20270115T0730" in (tmp_path / "state" / "applied.txt").read_text()
+
+
+def test_unrestorable_snapshot_keeps_collecting_but_stops_engine(tmp_path, caplog):
+    """리뷰 I7: 스냅샷과 .prev 모두 못 읽으면 죽지 않는다(재시작 반복으로 원본 수집까지 멈추지 않게):
+    원본은 계속 저장하고 엔진은 멈추며, 깨진 스냅샷을 덮어쓰지 않는다."""
+    (tmp_path / "state").mkdir()
+    (tmp_path / "state" / "league.pkl").write_bytes(b"broken")
+    with caplog.at_level(logging.INFO, logger="league.daemon"):
+        d = dm.Daemon(tmp_path, repo=tmp_path)
+    assert d.halted and "ENGINE HALTED" in caplog.text and "code_head" in caplog.text
+    run(d, T0, 65)
+    assert d.stats["records"] > 0 and d.stats["events"] == 0
+    assert list((tmp_path / "raw").rglob("*.parquet"))
+    write_decision(tmp_path)
+    run(d, T0 + 65_000, 65)
+    assert not (tmp_path / "state" / "applied.txt").exists()
+    d.close()
+    assert (tmp_path / "state" / "league.pkl").read_bytes() == b"broken"
+
+
+def test_restore_falls_back_to_prev_and_replays(tmp_path):
+    d = dm.Daemon(tmp_path, repo=tmp_path)
+    run(d, T0, 5)
+    d.snapshot()
+    run(d, T0 + 5_000, 70)
+    d.snapshot()
+    d.store.flush()
+    (tmp_path / "state" / "league.pkl").write_bytes(b"torn write")
+    d2 = dm.Daemon(tmp_path, repo=tmp_path)
+    assert not d2.halted and d2.lg.last_ts >= T0 + 60_000   # .prev + 원본 다시 넣기
+
+
+def test_replay_runs_legs_and_time_exits(tmp_path, monkeypatch):
+    d = dm.Daemon(tmp_path, repo=tmp_path)
+    run(d, T0, 5)
+    d.snapshot()
+    run(d, T0 + 5_000, 180)                         # 3분: 원본만 디스크에(비정상 종료 흉내)
+    calls = []
+    monkeypatch.setattr(dm.Daemon, "time_exits", lambda self, now: calls.append(("time", now)))
+    monkeypatch.setattr(dm.Daemon, "place_legs", lambda self: calls.append(("legs",)))
+    dm.Daemon(tmp_path, repo=tmp_path)
+    assert sum(c[0] == "time" for c in calls) >= 2 and sum(c[0] == "legs" for c in calls) >= 2
+
+
+def test_stale_ours_tag_pruned(tmp_path):
+    d = dm.Daemon(tmp_path, repo=tmp_path)
+    run(d, T0, 5)
+    d.st["ours_open"] = {"ours:ghost": {"iid": BTC, "step_ms": H, "max_hold": 96, "signal_ms": T0, "exit_side": "sell",
+                                        "qty": "1", "stop": "90", "target": "110", "expire_ms": None}}
+    run(d, T0 + 5_000, 70)
+    assert d.st["ours_open"] == {}
+
+
+def test_failing_job_counted_and_on_scoreboard(tmp_path, monkeypatch):
+    d = dm.Daemon(tmp_path, repo=tmp_path)
+    day = T0 // 86_400_000 * 86_400_000
+    run(d, day - 10_000, 8)
+    monkeypatch.setattr(d, "write_accounts", lambda now: 1 / 0)
+    run(d, day + 61_000, 3)                           # 분이 바뀔 때마다 실패
+    run(d, day + 121_000, 1)
+    f = d.st["job_failures"]["accounts"]
+    assert f["total"] >= 2 and f["streak"] >= 2
+    board = json.loads((tmp_path / "league" / "public" / "scoreboard.json").read_text())
+    assert board["ops"]["job_failures"]["accounts"]["total"] >= 1

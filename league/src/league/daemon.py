@@ -25,6 +25,7 @@ from .collect.util import now_ms
 from .core import TEAMS, League
 from .decision import IID, applied_ids, mark_applied, open_qty, to_orders
 from .events import to_engine_event
+from .head import git_head
 from .fill import OrderRequest, Trigger
 from .fill.engine import Cancel
 from .fill.events import sort_events
@@ -95,9 +96,17 @@ class Daemon:
         self.buf: list = []
         self.stats = {"records": 0, "events": 0, "late": 0}
         self.minute: int | None = None
-        if self.snap.exists():
-            self.lg = League.restore(self.snap)
-            self._replay()
+        self.halted: str | None = None   # 스냅샷 복원 실패: 원본 수집만 하고 엔진은 멈춘다
+        log.info("daemon start code_head=%s data=%s", git_head(self.repo), self.root)
+        if self.snap.exists() or self.snap.with_name(self.snap.name + ".prev").exists():
+            try:
+                self.lg = League.restore(self.snap)
+            except Exception as e:
+                self.halted, self.lg = repr(e)[:500], League(TEAMS, 0)   # 자리만: 돌리지도 저장하지도 않는다
+                log.critical("ENGINE HALTED: snapshot restore failed (%s). Raw collection continues; fix or move "
+                             "state/league.pkl(.prev) and restart.", self.halted)
+            else:
+                self._replay()
         else:
             self.lg = League(TEAMS, 0)
 
@@ -106,7 +115,7 @@ class Daemon:
         self.store.append(rec)
         self.stats["records"] += 1
         ev = to_engine_event(rec)
-        if ev is not None:
+        if ev is not None and not self.halted:
             self.buf.append(ev)
 
     def _step(self, evs) -> None:
@@ -123,22 +132,49 @@ class Daemon:
         self._step(ready)
 
     def _replay(self) -> None:
-        """스냅샷 뒤에 디스크에 쌓인 Toobit 원본을 다시 넣는다(마지막 flush 이후 것은 잃는다)."""
+        """스냅샷 뒤에 디스크에 쌓인 Toobit 원본을 다시 넣는다(마지막 flush 이후 것은 잃는다).
+        분이 바뀔 때마다 손절·익절 다리와 시간 종료도 돌린다(살아 있을 때와 같게)."""
         recs = [cls(**r) for kind, cls in REPLAY_KINDS.items()
                 for r in self.store.read(TOOBIT, kind, self.lg.last_ts + 1, 2**62)]
-        n = self.stats["events"]
-        self._step([e for e in map(to_engine_event, recs) if e is not None])
+        n, minute = self.stats["events"], None
+        for ev in sort_events([e for e in map(to_engine_event, recs) if e is not None]):
+            m = ev.at_ms // 60_000
+            if minute is not None and m != minute and self.st.get("season_started") is not None:
+                self._job("legs", self.place_legs)
+                self._job("time_exits", self.time_exits, ev.at_ms)
+            minute = m
+            self._step([ev])
         log.info("restored snapshot at %s, replayed %d events", self.lg.last_ts, self.stats["events"] - n)
 
     # ---------- 시계 ----------
     def _job(self, name: str, fn, *a):
-        """예약 작업 하나의 실패가 데몬을 죽이지 않게(죽으면 launchd 재시작 → 같은 실패 반복)."""
+        """예약 작업 하나의 실패가 데몬을 죽이지 않게(죽으면 launchd 재시작 → 같은 실패 반복).
+        실패는 작업별로 센다(누적·연속, daemon.json → 성적판 ops)."""
+        key = name.split()[0]
         try:
-            return fn(*a)
+            r = fn(*a)
         except Exception:
             log.exception("job %s failed", name)
+            f = self.st.setdefault("job_failures", {}).setdefault(key, {"total": 0, "streak": 0})
+            f["total"] += 1
+            f["streak"] += 1
+            f["last_utc"] = _utc(now_ms(), "%Y-%m-%dT%H:%M:%SZ")
+            if f["streak"] in (3, 60, 3600):
+                log.error("job %s failed %d times in a row", key, f["streak"])
+            return None
+        f = self.st.get("job_failures", {}).get(key)
+        if f and f["streak"]:
+            f["streak"] = 0
+        return r
 
     def tick(self, now: int) -> None:
+        if self.halted:
+            m = now // 60_000
+            if m != self.minute:
+                self.minute = m
+                self._job("flush", self.store.flush)
+                log.error("ENGINE HALTED (%s): raw records=%d stored, engine not stepped", self.halted, self.stats["records"])
+            return
         self._job("drain", self._drain, now - LAG_MS)
         started = self._job("season", self._season, now)
         if started:
@@ -274,6 +310,8 @@ class Daemon:
 
     # ---------- 우리 팀(매시) ----------
     def due_hour(self, now: int) -> int | None:
+        if self.halted:
+            return None
         hour = now // H * H
         if now - hour < OURS_DELAY_MS or self.st.get("last_hour") == hour:
             return None
@@ -390,7 +428,12 @@ class Daemon:
             iid = t["iid"]
             entry = next((o for o in eng.orders if o.req.tag == tag and not o.req.reduce_only), None)
             if entry is None:
-                continue   # 아직 큐에 있음(다음 이벤트에 엔진으로)
+                if any(getattr(r, "tag", None) == tag for r in self.lg.queues["ours"].pending):
+                    continue   # 아직 큐에 있음(다음 이벤트에 엔진으로)
+                del opened[tag]   # 엔진에도 큐에도 없음: 진입 기록 뒤 스냅샷 전에 죽었다 → 추적만 남은 것
+                changed = True
+                log.warning("ours %s dropped: entry order neither in the engine nor queued (crash before snapshot)", tag)
+                continue
             rest = [o for o in v.open_orders(iid) if o.req.tag == tag]
             out, why = [], None
             if entry.live and not entry.filled and t["expire_ms"] and now >= t["expire_ms"]:
@@ -438,7 +481,9 @@ class Daemon:
         if mid is None or self.st.get("start_mid") is None:
             log.warning("scoreboard skipped: no BTC book yet")
             return
-        path = write_public(build_scoreboard(self.lg, self.root / "decisions", {"start": self.st["start_mid"], "now": mid}), self.repo)
+        ops = {"job_failures": self.st.get("job_failures", {})}
+        path = write_public(build_scoreboard(self.lg, self.root / "decisions", {"start": self.st["start_mid"], "now": mid}, ops),
+                            self.repo)
         log.info("scoreboard written %s", path)
         if self.publish:
             subprocess.Popen(["/bin/zsh", str(self.repo / "league" / "deploy" / "publish.sh")])   # 기다리지 않는다
@@ -446,8 +491,11 @@ class Daemon:
     def close(self) -> None:
         """멈출 때: 버퍼를 디스크에(먼저), 남은 이벤트를 엔진에, 스냅샷."""
         self._job("flush", self.store.flush)
-        self._job("drain", self._drain, 2**62)
         self._save()
+        if self.halted:
+            log.error("stopped while ENGINE HALTED: snapshot left untouched")
+            return
+        self._job("drain", self._drain, 2**62)
         self.snapshot()
         log.info("stopped: records=%d events=%d late=%d", self.stats["records"], self.stats["events"], self.stats["late"])
 

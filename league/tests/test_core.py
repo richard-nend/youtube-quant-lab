@@ -90,3 +90,23 @@ def test_gap_downgrades_grade():
     assert grades(evs) and "A" not in grades(evs)
     ctrl = evs[:4] + [BookEvent(2000, BTC, BIDS, ASKS)]   # 공백 없음 → A
     assert set(grades(ctrl)) == {"A"}
+
+
+def test_snapshot_keeps_prev_and_restore_falls_back(tmp_path):
+    """리뷰 I7: 스냅샷이 깨지면 직전 것(.prev)으로, 다른 판본(버전 없음) 파일은 거부."""
+    p = tmp_path / "s.pkl"
+    a = League(list(TEAMS), 0)
+    a.snapshot(p)
+    a.last_ts = 5
+    a.snapshot(p)
+    assert (tmp_path / "s.pkl.prev").exists()
+    p.write_bytes(b"\x80garbage")
+    assert League.restore(p).last_ts == 0              # .prev 로 복구
+    import pickle
+    p.write_bytes(pickle.dumps({"not": "a league"}))
+    (tmp_path / "s.pkl.prev").write_bytes(b"")
+    try:
+        League.restore(p)
+        raise AssertionError("must fail")
+    except RuntimeError as e:
+        assert "s.pkl" in str(e) and "prev" in str(e)
