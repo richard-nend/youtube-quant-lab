@@ -73,9 +73,9 @@ def sim_exits(candidate: str) -> tuple[int, int, int]:
     return {"1h": H, "4h": 4 * H}[tf], sim.get("limit_ttl", par["limit_ttl"].default), sim.get("max_hold", par["max_hold"].default)
 
 
-def _default_signals(now):
+def _default_signals(now, week_path: Path | None = None):
     from .ours.signals import new_signals   # 무거운 import(연구 코드·pandas)는 첫 회차에서만
-    return new_signals(now)
+    return new_signals(now, week_path)
 
 
 class Daemon:
@@ -92,7 +92,9 @@ class Daemon:
         self.st_path = self.state_dir / "daemon.json"
         self.st = json.loads(self.st_path.read_text()) if self.st_path.exists() else {}
         self.st.setdefault("dec_equity", {})
-        self.signals, self._brake = signals or _default_signals, brake
+        # 주별 후보 고정은 state/ours_week.json 에 남는다(주 중간 재시작에도 같은 후보)
+        self.signals = signals or (lambda now: _default_signals(now, self.state_dir / "ours_week.json"))
+        self._brake = brake
         self.buf: list = []
         self.stats = {"records": 0, "events": 0, "late": 0}
         self.minute: int | None = None

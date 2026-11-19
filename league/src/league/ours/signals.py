@@ -6,6 +6,7 @@ gitignore된 본 체크아웃에 있으므로 QL_MAIN_ROOT에서 읽는다.
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -59,6 +60,27 @@ def chosen_candidate(trades, month):
     return None if score[best] == -np.inf else best
 
 
+def week_start(ts: pd.Timestamp) -> pd.Timestamp:
+    """그 시각이 속한 주의 월요일 00:00 UTC."""
+    return ts.normalize() - pd.Timedelta(days=ts.weekday())
+
+
+def week_choice(trades: dict, sym: str, ts: pd.Timestamp, path: Path | None = None) -> str | None:
+    """리그 전용(13주 러너는 월 단위 그대로): 주마다 고정한 후보. 월요일 00:00 UTC에 러너 규칙(직전 12개월 순수익 최대,
+    30건 미만 제외)을 그때까지 **끝난 거래만**으로 계산해 그 주 내내 쓴다. 러너 규칙은 아직 열린 거래를 잠정 결과로 세어
+    달 초에 후보가 시간마다 바뀌었다. 한 번 정한 값은 path(JSON)에 남겨 주 중간에 재시작해도 같다."""
+    wk = week_start(ts)
+    key = f"{sym}|{wk.isoformat()}"
+    got = json.loads(path.read_text()) if path is not None and path.exists() else {}
+    if key not in got:
+        got[key] = chosen_candidate({n: t[t.exit_time < wk] if len(t) else t for n, t in trades.items()}, wk)
+        if path is not None:
+            tmp = path.with_name(path.name + ".tmp")
+            tmp.write_text(json.dumps(got, indent=1))
+            tmp.replace(path)
+    return got[key]
+
+
 def run_candidate(b: pd.DataFrame, candidate: str):
     """(signals, trades) of one candidate on these bars, exactly as the runner and build_trades do."""
     _, zwin, fn, sim = asm.CANDIDATES[candidate]
@@ -93,8 +115,8 @@ def live_facts(sym, candidate, signal_time, bars, trades, sigs=None) -> dict:
             **{f"cand_{c}": float(c == candidate) for c in asm.CANDIDATES}}
 
 
-def new_signals(now: datetime) -> list[LiveSignal]:
-    """이번 시간(now-1h, now]에 봉이 마감되며 생긴 신호 중, 그 달 선택 후보의 것만."""
+def new_signals(now: datetime, week_path: Path | None = None) -> list[LiveSignal]:
+    """이번 시간(now-1h, now]에 봉이 마감되며 생긴 신호 중, 그 주(신호 봉 시작 시각의 주)에 고정한 후보의 것만."""
     out = []
     for sym in SYMBOLS:
         bb = {tf: runner.bars(sym, tf, now) for tf in ("1h", "4h")}
@@ -108,9 +130,9 @@ def new_signals(now: datetime) -> list[LiveSignal]:
                 key = f"{sym}|{cand}|{ts.isoformat()}"
                 if not (now - timedelta(hours=1) < ts + step <= now) or any(x.key == key for x in out):
                     continue  # one signal per bar, the first (as build_trades)
-                # as the runner: the month choice counts still-open trades at their provisional result, so early in a
-                # month it can differ from the backtest's choice (seen: ETH 2026-03-01, FLOW-1h live vs FVG-4h backtest)
-                if chosen_candidate(trades, ts.to_period("M").to_timestamp().tz_localize("UTC")) != cand:
+                # league only: weekly frozen choice from closed trades (the runner's monthly choice counts open trades
+                # provisionally and flipped hour to hour early in a month; seen ETH 2026-03-01) — RULES.md §10
+                if week_choice(trades, sym, ts, week_path) != cand:
                     continue
                 out.append(LiveSignal(key, sym, cand, ts, int(s.side), s.entry,
                                       s.limit_price, float(s.stop), float(s.target),
