@@ -24,14 +24,21 @@ class RawStore:
         self._buf[(rec.venue, rec.kind, dt.strftime("%Y-%m-%d"), dt.strftime("%H"))].append(to_row(rec))
 
     def flush(self) -> None:
-        buf, self._buf = self._buf, defaultdict(list)
-        for (venue, kind, date, hour), rows in buf.items():
+        # 쓰기에 성공한 버킷만 버퍼에서 뺀다. 실패하면 나머지는 버퍼에 남기고 예외를 다시 던진다.
+        for key in list(self._buf):
+            venue, kind, date, hour = key
+            rows = self._buf[key]
             d = self.root / f"venue={venue}" / f"kind={kind}" / f"date={date}"
             d.mkdir(parents=True, exist_ok=True)
-            seq = len(list(d.glob(f"hour={hour}-*.parquet")))
-            tmp = d / f".hour={hour}-{seq}.tmp"
+            seqs = [int(p.stem.rsplit("-", 1)[1]) for p in d.glob(f"hour={hour}-*.parquet")]
+            seq = max(seqs, default=-1) + 1
+            tmp, final = d / f".hour={hour}-{seq}.tmp", d / f"hour={hour}-{seq}.parquet"
             pq.write_table(pa.Table.from_pylist(rows), tmp, compression="zstd")
-            tmp.rename(d / f"hour={hour}-{seq}.parquet")  # 읽는 쪽이 쓰다 만 파일을 보지 않게
+            if final.exists():  # 같은 번호가 생겼으면 덮어쓰지 않는다
+                tmp.unlink()
+                raise FileExistsError(final)
+            tmp.rename(final)  # 읽는 쪽이 쓰다 만 파일을 보지 않게
+            del self._buf[key]
 
     def read(self, venue: str, kind: str, start_ms: int, end_ms: int) -> list[dict]:
         """start_ms <= ts_ms < end_ms, ts 오름차순(같으면 파일·행 순서 유지)."""

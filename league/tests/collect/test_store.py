@@ -37,3 +37,38 @@ def test_store_flush_twice_no_dupes(tmp_path):
     assert len(s.read("toobit_usdtm", "book", T0, T0 + H)) == 2
     s.append(book(T0 + 2)); s.flush()  # 같은 시간에 다시 쓰면 새 seq 파일, 합쳐 3개
     assert len(s.read("toobit_usdtm", "book", T0, T0 + H)) == 3
+
+
+def test_store_write_failure_keeps_rows(tmp_path, monkeypatch):
+    import pyarrow.parquet as pq
+    s = RawStore(tmp_path)
+    s.append(book(T0)); s.append(book(T0 + 2 * H))  # 서로 다른 시간 = 버킷 둘
+    real, calls = pq.write_table, []
+
+    def flaky(*a, **k):
+        calls.append(1)
+        if len(calls) == 1:
+            raise OSError("disk full")
+        return real(*a, **k)
+
+    monkeypatch.setattr(pq, "write_table", flaky)
+    try:
+        s.flush()
+        assert False, "should raise"
+    except OSError:
+        pass
+    monkeypatch.setattr(pq, "write_table", real)
+    s.flush()
+    assert [r["ts_ms"] for r in s.read("toobit_usdtm", "book", T0, T0 + 3 * H)] == [T0, T0 + 2 * H]
+
+
+def test_store_seq_after_gap_not_overwritten(tmp_path):
+    s = RawStore(tmp_path)
+    s.append(book(T0)); s.flush()
+    d = next(tmp_path.glob("venue=*/kind=book/date=*"))
+    h = next(d.glob("hour=*-0.parquet")).name.split("-")[0]
+    (d / f"{h}-2.parquet").write_bytes((d / f"{h}-0.parquet").read_bytes())  # 파일 -0, -2 (빈 번호 1)
+    before = (d / f"{h}-2.parquet").read_bytes()
+    s.append(book(T0 + 1)); s.flush()
+    assert sorted(p.name for p in d.glob("*.parquet")) == [f"{h}-0.parquet", f"{h}-2.parquet", f"{h}-3.parquet"]
+    assert (d / f"{h}-2.parquet").read_bytes() == before
