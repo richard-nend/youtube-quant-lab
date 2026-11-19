@@ -1,0 +1,14 @@
+{
+ "threshold": 0.7179392471717517,
+ "quantile": 0.8,
+ "pool_rows": 6691,
+ "fit_utc": "2026-11-19T16:51:30Z",
+ "sha256": "c6c6380bca5b4c22d42c15b2e60b48e408d07e7154a8135b01afaeaa888982b1",
+ "versions": {
+  "python": "3.12.12",
+  "numpy": "2.5.5",
+  "pandas": "3.1.1",
+  "scikit-learn": "1.9.1",
+  "lightgbm": "4.6.0"
+ }
+}
