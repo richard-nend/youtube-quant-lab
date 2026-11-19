@@ -50,8 +50,23 @@ def _pos(x) -> bool:
     return isinstance(x, (int, float)) and not isinstance(x, bool) and x > 0
 
 
-def to_orders(d: dict, view: EngineView, mark: dict[str, Decimal]) -> list:
-    """mark 키는 "BTC"/"ETH". 판단 한 건 = 그 팀의 이전 미체결 주문 취소 + 목표 포지션까지의 차이 주문."""
+def open_qty(view: EngineView, pending=()) -> tuple[dict, dict]:
+    """종목별 (포지션 + 살아 있는 진입 주문 잔량, 아직 엔진에 안 들어간 진입 주문 수량). reduce-only는 노출을 늘리지 않아 뺀다.
+    3배 상한은 체결될 수 있는 진입 주문까지 세야 지켜진다(리뷰 C1)."""
+    live = {iid: abs(view.position(iid)) for iid in IID.values()}
+    for o in view.open_orders():
+        if not o.req.reduce_only and o.req.instrument_id in live:
+            live[o.req.instrument_id] += o.req.qty - o.filled
+    queued = dict.fromkeys(IID.values(), Decimal(0))
+    for r in pending:
+        if isinstance(r, OrderRequest) and not r.reduce_only and r.instrument_id in queued:
+            queued[r.instrument_id] += r.qty
+    return live, queued
+
+
+def to_orders(d: dict, view: EngineView, mark: dict[str, Decimal], pending=()) -> list:
+    """mark 키는 "BTC"/"ETH". 판단 한 건 = 그 팀의 이전 미체결 주문 취소 + 목표 포지션까지의 차이 주문.
+    pending = 그 팀 큐에 아직 남은 요청(취소할 수 없으니 상한에 센다)."""
     if validate(d):   # 깨진 판단은 보유(주문·취소 없음)
         return []
     team, tag = d["team"], f"{d['team']}:{d['decided_utc']}"
@@ -65,7 +80,10 @@ def to_orders(d: dict, view: EngineView, mark: dict[str, Decimal]) -> list:
     if eq <= 0:
         return []
     pct = lambda s: view.position(IID[s]) * Decimal(str(mark.get(s) or 0)) / eq * 100   # 현재 부호 있는 노출(%)
-    untouched = sum(abs(pct(s)) for s in IID if s not in target)
+    live, queued = open_qty(view, pending)
+    npct = lambda s, q: q[IID[s]] * Decimal(str(mark.get(s) or 0)) / eq * 100
+    # 손대지 않는 종목: 포지션 + 걸린 진입 주문. 손대는 종목의 걸린 주문은 이 판단이 취소한다. 큐의 주문은 어느 종목이든 센다.
+    untouched = sum(npct(s, live) for s in IID if s not in target) + sum(npct(s, queued) for s in IID)
     gross = sum(abs(v) for v in target.values())
     if gross > max(Decimal(0), CAP - untouched):
         # 상한이 걸리면: 이미 같은 방향으로 가진 노출은 (요청 한도까지) 유지만 하고 사용분으로 센다.

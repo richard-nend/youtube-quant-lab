@@ -144,3 +144,24 @@ def test_missing_or_zero_mark_is_hold():
 def test_tiny_pct_does_not_flatten():
     v = league(pos_qty=3).view("claude")
     assert to_orders(dec([item(pct=0.001)]), v, MARK) == []
+
+
+def test_cap_counts_resting_entry_of_untouched_symbol():
+    """리뷰 C1: BTC 300% 지정가가 걸려 있는 채로 ETH 300%를 내면, 체결 뒤 6배가 된다 → ETH는 0이어야 한다."""
+    lg = league()
+    first = to_orders(dec([item("BTC", "long", 300, order="limit", limit_price=99.5)]), lg.view("claude"), MARK)
+    lg.submit("claude", first)
+    for i in range(3, 5):
+        lg.step(BookEvent(i * 1000, BTC, [(Decimal(99), Decimal(500))], [(Decimal(100), Decimal(500))]))
+    v = lg.view("claude")
+    assert v.open_orders(BTC) and v.position(BTC) == 0
+    o = to_orders(dec([item("ETH", "long", 300)], utc="20261119T0400"), v, MARK)
+    assert sum(x.qty for x in o if x.instrument_id == ETH) * 100 / v.equity() * 100 < 1
+
+
+def test_cap_counts_queued_orders():
+    lg = league()
+    lg.submit("claude", to_orders(dec([item("BTC", "long", 300)]), lg.view("claude"), MARK))   # 아직 큐에
+    v = lg.view("claude")
+    o = to_orders(dec([item("ETH", "long", 300)], utc="20261119T0400"), v, MARK, pending=lg.queues["claude"].pending)
+    assert sum(x.qty for x in o if x.instrument_id == ETH) * 100 / v.equity() * 100 < 1

@@ -23,7 +23,7 @@ from .collect.store import RawStore
 from .collect.toobit import ToobitUsdtmCollector
 from .collect.util import now_ms
 from .core import TEAMS, League
-from .decision import IID, applied_ids, mark_applied, to_orders
+from .decision import IID, applied_ids, mark_applied, open_qty, to_orders
 from .events import to_engine_event
 from .fill import OrderRequest, Trigger
 from .fill.engine import Cancel
@@ -177,7 +177,7 @@ class Daemon:
             f, did = new[-1], f"{team}:{new[-1].stem}"
             try:
                 d = json.loads(f.read_text())
-                orders = to_orders(d, self.lg.view(team), self._marks(team))
+                orders = to_orders(d, self.lg.view(team), self._marks(team), self.lg.queues[team].pending)
             except Exception:
                 log.exception("%s decision %s unreadable, treated as hold", team, f.stem)
                 orders = []
@@ -278,7 +278,8 @@ class Daemon:
             log.warning("ours %s skipped: no Toobit mark yet", s.key)
             return
         entry = Decimal(str(s.limit_price)) if s.entry == "limit" else mark
-        held = sum(abs(v.position(i)) * (eng.mark_of(i) or 0) for i in IID.values())
+        live, queued = open_qty(v, self.lg.queues["ours"].pending)   # 포지션 + 걸린·큐의 진입 주문(리뷰 C1)
+        held = sum((live[i] + queued[i]) * (eng.mark_of(i) or 0) for i in IID.values())
         qty = size_qty(v.equity(), entry, Decimal(str(s.stop)), held)
         if not qty:
             log.info("ours %s skipped: size rounds to 0", s.key)

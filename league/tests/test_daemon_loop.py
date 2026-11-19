@@ -255,3 +255,19 @@ def test_failing_job_does_not_stop_tick_and_day_advances(tmp_path, monkeypatch):
     run(d, day + 86_400_000 + 5_000, 3)
     assert d.st["board_day"] == dm._utc(day + 86_400_000, "%Y-%m-%d")   # 성적판이 실패해도 날짜는 넘어간다
     assert (tmp_path / "state" / "account_claude.json").exists()
+
+
+def test_ours_two_signals_same_hour_respect_3x_cap(tmp_path):
+    """리뷰 C1: 같은 시간 BTC·ETH 신호(손절 0.5%) → 각각 200%라 큐에 쌓인 첫 주문을 안 세면 4배."""
+    d = dm.Daemon(tmp_path, repo=tmp_path, brake=FakeBrake())
+    run(d, T0, 5)
+    btc, eth = sig(), sig(key="ETHUSDT|FVG-1h|x")
+    eth.symbol = "ETHUSDT"
+    for s in (btc, eth):
+        s.stop, s.target = 99.5 * 0.995, 110.0
+    d.run_hour(T0 // H * H, [btc, eth])
+    run(d, T0 + 5_000, 5)
+    v = d.lg.view("ours")
+    gross = sum(abs(v.position(i)) * d.lg.engines["ours"].mark_of(i) for i in (BTC, ETH))
+    assert v.position(BTC) and v.position(ETH)
+    assert gross <= 3 * Decimal(5000)   # 진입 시점 순자산(수수료 전) 기준 상한
