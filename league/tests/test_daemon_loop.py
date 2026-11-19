@@ -159,7 +159,7 @@ def test_due_hour_after_delay(tmp_path):
 def test_daily_scoreboard_written(tmp_path):
     d = dm.Daemon(tmp_path, repo=tmp_path)
     day = T0 // 86_400_000 * 86_400_000
-    run(d, day - 3_000, 2)
+    run(d, day - 10_000, 8)                           # 시즌 시작(엔진 초기화) 뒤 호가가 들어온 다음 날짜가 바뀐다
     run(d, day + 5_000, 3)
     board = json.loads((tmp_path / "league" / "public" / "scoreboard.json").read_text())
     assert board["simulated"] is True and len(board["teams"]) == 4
@@ -243,7 +243,7 @@ def test_legs_placed_after_limit_fill_and_replaced_if_cancelled(tmp_path):
 def test_failing_job_does_not_stop_tick_and_day_advances(tmp_path, monkeypatch):
     d = dm.Daemon(tmp_path, repo=tmp_path)
     day = T0 // 86_400_000 * 86_400_000
-    run(d, day - 3_000, 2)
+    run(d, day - 10_000, 8)                           # 시즌 시작(엔진 초기화) 뒤 호가가 들어온 다음 날짜가 바뀐다
     (tmp_path / "decisions" / "claude").mkdir(parents=True)
     (tmp_path / "decisions" / "claude" / "20270115T0000.json").write_text("{corrupt")
     boom = lambda *a: (_ for _ in ()).throw(RuntimeError("boom"))
@@ -326,3 +326,44 @@ def test_stop_fires_within_seconds_of_mark_cross(tmp_path):
         d.tick(ts + dm.LAG_MS)
         if i == 7:
             assert d.lg.view("ours").position(BTC) == 0, "stop did not fire within 4 s of the cross"
+
+
+def test_season_gate_then_reset_at_start(tmp_path):
+    """리뷰 I4: 시즌 시작 전에는 AI 판단·우리 팀 진입·공개가 없다. 시작 시각에 엔진을 5,000으로 새로 만들고,
+    그 순간 BTC 중간가를 기준선 시작값으로 잡고, 시험 기간 판단·적용 기록은 trial/로 옮긴다(원본은 그대로)."""
+    start = T0 + 3 * 60_000
+    d = dm.Daemon(tmp_path, repo=tmp_path, brake=FakeBrake(), season_start_ms=start)
+    run(d, T0, 5)
+    write_decision(tmp_path)
+    run(d, T0 + 5_000, 70)
+    assert d.lg.view("claude").position(BTC) == 0 and not (tmp_path / "state" / "applied.txt").exists()
+    d.run_hour(T0 // H * H, [sig()])
+    run(d, T0 + 75_000, 5)
+    assert d.lg.view("ours").position(BTC) == 0 and d.lg.queues["ours"].pending == []
+    d.scoreboard()
+    assert not (tmp_path / "league" / "public" / "scoreboard.json").exists()
+    assert d.st.get("start_mid") is None
+    old = d.lg
+    old.engines["gpt"].grade_count["A"] += 7          # 시험 기간 흔적
+    run(d, start - 1_000, 5)                            # 시작 시각을 지난다
+    assert d.lg is not old and d.lg.engines["gpt"].grade_count["A"] < 7
+    assert all(d.lg.view(t).equity() == 5000 for t in d.lg.teams)
+    assert d.st["start_mid"] == "99.5" and d.st["season_started"] >= start
+    assert not (tmp_path / "decisions" / "claude").exists() and list((tmp_path / "trial").rglob("20270115T0800.json"))
+    assert list((tmp_path / "raw").rglob("*.parquet"))   # 원본은 그대로
+    p = write_decision(tmp_path, utc=dm._utc(start, "%Y%m%dT%H%M"))
+    run(d, start + 5_000, 70)
+    assert d.lg.view("claude").position(BTC) > 0        # 시작 뒤 판단은 적용
+    d.close()
+    d2 = dm.Daemon(tmp_path, repo=tmp_path, season_start_ms=start)   # 재시작: 다시 초기화하지 않는다
+    assert d2.lg.view("claude").position(BTC) > 0
+
+
+def test_stale_decision_not_applied(tmp_path, caplog):
+    d = dm.Daemon(tmp_path, repo=tmp_path)
+    run(d, T0, 5)
+    write_decision(tmp_path, utc="20270115T0730")      # 40분 전 판단(데몬이 멈춰 있었다)
+    with caplog.at_level(logging.WARNING, logger="league.daemon"):
+        run(d, T0 + 5_000, 70)
+    assert d.lg.view("claude").position(BTC) == 0 and "stale" in caplog.text
+    assert "claude:20270115T0730" in (tmp_path / "state" / "applied.txt").read_text()

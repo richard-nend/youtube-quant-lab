@@ -44,6 +44,12 @@ SYM = {v: k for k, v in IID.items()}
 OURS_IID = {"BTCUSDT": IID["BTC"], "ETHUSDT": IID["ETH"]}
 REPO = Path(__file__).resolve().parents[3]
 REPLAY_KINDS = {"trades": Trade, "book": BookSnapshot, "ctx": MarketCtx}
+STALE_DECISION_MS = 30 * 60_000   # 이보다 오래된 판단은 적용하지 않는다(옛 시세로 낸 판단)
+SEASON = json.loads((Path(__file__).resolve().parents[2] / "config" / "season.json").read_text())
+
+
+def season_start_ms() -> int:
+    return int(datetime.strptime(SEASON["season_start_utc"], "%Y-%m-%dT%H:%MZ").replace(tzinfo=timezone.utc).timestamp() * 1000)
 
 
 def _utc(ms: int, fmt: str) -> str:
@@ -72,8 +78,10 @@ def _default_signals(now):
 
 
 class Daemon:
-    def __init__(self, root: Path, *, repo: Path = REPO, publish: bool = False, signals=None, brake=None):
+    def __init__(self, root: Path, *, repo: Path = REPO, publish: bool = False, signals=None, brake=None,
+                 season_start_ms: int | None = None):
         self.root, self.repo, self.publish = Path(root), Path(repo), publish
+        self.season_start = season_start_ms if season_start_ms is not None else globals()["season_start_ms"]()
         self.state_dir = self.root / "state"
         self.state_dir.mkdir(parents=True, exist_ok=True)
         self.store = RawStore(self.root / "raw")
@@ -132,14 +140,13 @@ class Daemon:
 
     def tick(self, now: int) -> None:
         self._job("drain", self._drain, now - LAG_MS)
-        self._job("legs", self.place_legs)
-        if self.st.get("start_mid") is None and self._mid():
-            self.st["start_mid"] = str(self._mid())
-            self._save()
+        started = self._job("season", self._season, now)
+        if started:
+            self._job("legs", self.place_legs)
         m = now // 60_000
         if m != self.minute:
             self.minute = m
-            self._minute(now)
+            self._minute(now, started)
         day = _utc(now, "%Y-%m-%d")
         if self.st.get("board_day") != day:
             prev, self.st["board_day"] = self.st.get("board_day"), day   # 실패해도 날짜는 넘긴다(재시작 때 반복 안 함)
@@ -147,13 +154,37 @@ class Daemon:
                 self._job("scoreboard", self.scoreboard)
             self._save()
 
-    def _minute(self, now: int) -> None:
+    def _season(self, now: int) -> bool:
+        """시즌 시작 전 = 시험 기간(수집·엔진만). 시작 시각을 처음 지날 때 한 번: 엔진을 팀당 5,000으로 새로 만들고,
+        그 순간 Toobit BTC 중간가를 기준선 시작값으로, 시험 기간 판단·적용·우리 팀 기록은 trial/<시각>/ 으로 옮긴다."""
+        if self.st.get("season_started") is not None:
+            return True
+        if now < self.season_start:
+            return False
+        mid = self._mid()
+        if mid is None:
+            log.warning("season start waits for a Toobit BTC book")
+            return False
+        trial = self.root / "trial" / _utc(now, "%Y%m%dT%H%M")
+        trial.mkdir(parents=True, exist_ok=True)
+        for p in (self.root / "decisions", self.applied, self.seen):
+            if p.exists():
+                p.replace(trial / p.name)
+        self.lg = League(TEAMS, self.lg.last_ts)
+        self.st.update(season_started=now, start_mid=str(mid), dec_equity={}, ours_open={}, ai_legs={})
+        self._save()
+        self.snapshot()
+        log.warning("SEASON STARTED at %s: engines reset to 5000/team, start_mid %s, trial records -> %s",
+                    _utc(now, "%Y-%m-%dT%H:%M:%SZ"), mid, trial)
+        return True
+
+    def _minute(self, now: int, started: bool = True) -> None:
         try:
             self.store.flush()
         except Exception:
             log.exception("raw flush failed (rows kept in memory)")
-        for name, fn, a in (("decisions", self.apply_decisions, ()), ("time_exits", self.time_exits, (now,)),
-                            ("accounts", self.write_accounts, (now,)), ("results", self.update_results, ())):
+        jobs = [("decisions", self.apply_decisions, (now,)), ("time_exits", self.time_exits, (now,))] if started else []
+        for name, fn, a in jobs + [("accounts", self.write_accounts, (now,)), ("results", self.update_results, ())]:
             self._job(name, fn, *a)
         log.info("minute %s records=%d events=%d late=%d buffered=%d", _utc(now, "%H:%M"), self.stats["records"],
                  self.stats["events"], self.stats["late"], len(self.buf))
@@ -163,7 +194,7 @@ class Daemon:
         eng = self.lg.engines[team]
         return {s: eng.mark_of(iid) for s, iid in IID.items()}
 
-    def apply_decisions(self) -> None:
+    def apply_decisions(self, now: int) -> None:
         if not all(all(self._marks(t).values()) for t in AI_TEAMS):
             return   # 시세가 아직 없으면 판단을 소비하지 않고 미룬다
         done, changed = applied_ids(self.applied), False
@@ -175,6 +206,15 @@ class Daemon:
             if not new:
                 continue
             f, did = new[-1], f"{team}:{new[-1].stem}"
+            try:
+                age = now - int(datetime.strptime(f.stem, "%Y%m%dT%H%M").replace(tzinfo=timezone.utc).timestamp() * 1000)
+            except ValueError:
+                age = 0   # 이름이 시각이 아니면 내용으로 판단(깨진 파일은 아래에서 유지 처리)
+            if age > STALE_DECISION_MS:
+                mark_applied(self.applied, did)
+                log.warning("%s decision %s stale (%d min old), not applied", team, f.stem, age // 60_000)
+                changed = True
+                continue
             legs: dict = {}
             try:
                 d = json.loads(f.read_text())
@@ -260,6 +300,10 @@ class Daemon:
         if prev is not None and hour - prev > H:
             missed = [_utc(t, "%m-%d %H:00") for t in range(prev + H, hour, H)]
             log.warning("ours: missed %d hour(s) %s — no catch-up, their signals are not entered", len(missed), missed)
+        if self.st.get("season_started") is None:
+            if sigs:
+                log.info("ours: before season start, %d signal(s) not entered", len(sigs))
+            sigs = ()
         for s in sigs or ():
             self._job(f"enter {s.key}", self._enter, s)
         self.st["last_hour"] = hour
@@ -387,6 +431,9 @@ class Daemon:
         self.lg.snapshot(self.snap)
 
     def scoreboard(self) -> None:
+        if self.st.get("season_started") is None:
+            log.info("scoreboard skipped: season not started (nothing is published before the start)")
+            return
         mid = self._mid()
         if mid is None or self.st.get("start_mid") is None:
             log.warning("scoreboard skipped: no BTC book yet")
