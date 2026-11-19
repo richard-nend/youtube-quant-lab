@@ -1,0 +1,38 @@
+{
+  "checked": "2026-11-19",
+  "venue": "toobit_usdtm",
+  "taker": "0.0006",
+  "maker": "0.0002",
+  "fee_note": "VIP 0 futures (USDT perpetual). Applies to all futures markets.",
+  "fee_source": "https://www.toobit.com/en-US/support/fee-rate",
+  "fee_verified": true,
+  "trigger_by": "mark",
+  "trigger_by_unverified": true,
+  "trigger_note": "Toobit lets the user choose per order: tpTriggerBy/slTriggerBy/triggerBy = CONTRACT_PRICE or MARK_PRICE. No platform default found; league picks mark (conservative, avoids last-price wicks). Orders must set it explicitly.",
+  "trigger_source": "https://api-docs.toobit.com/api/usdt-m-api-v2.html ; https://support.toobit.com/hc/en-us/articles/48876825047961-Understanding-Take-Profit-and-Stop-Loss-TP-SL-in-Futures-Trading",
+  "liq_clearance_fee": "0",
+  "liq_clearance_fee_unverified": true,
+  "liq_note": "Toobit liquidation fee / liquidation price basis (mark vs last) not found in official docs. Engine uses Binance-style formula; fee left 0.",
+  "BTC": {
+    "symbol": "BTC-SWAP-USDT",
+    "mmr": "0.002",
+    "maint_amount": "0",
+    "max_leverage": "200",
+    "tier1_max_value_usdt": "90953",
+    "tiers_maintMargin": ["0.002", "0.0025", "0.0033", "0.005", "0.01", "0.0125", "0.02", "0.03", "0.1", "0.125", "0.1667", "0.25", "0.5"],
+    "maint_amount_note": "First tier: 0 by definition. Higher tiers' maint_amount not published by Toobit; not needed for paper positions within tier 1 (<=90,953 USDT notional).",
+    "verified": true,
+    "source": "https://api.toobit.com/api/v1/exchangeInfo (contracts[].riskLimits, public, fetched 2026-11-19)"
+  },
+  "ETH": {
+    "symbol": "ETH-SWAP-USDT",
+    "mmr": "0.002",
+    "maint_amount": "0",
+    "max_leverage": "200",
+    "tier1_max_value_usdt": "177000",
+    "tiers_maintMargin": ["0.002", "0.003", "0.0045", "0.0067", "0.01", "0.0225", "0.0335", "0.095", "0.125", "0.1667", "0.25", "0.5"],
+    "maint_amount_note": "First tier: 0 by definition.",
+    "verified": true,
+    "source": "https://api.toobit.com/api/v1/exchangeInfo (contracts[].riskLimits, public, fetched 2026-11-19)"
+  }
+}
