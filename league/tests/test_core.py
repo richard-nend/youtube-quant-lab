@@ -35,12 +35,16 @@ def run_league(evs, orders, lg=None):
     return lg
 
 
-ORDERS = {10: [("claude", [mkt()])], 20: [("gpt", [lim("buy", "1", 98)]), ("ours", [mkt("sell", "2")])]}
+ORDERS = {15: [("gemini", [mkt("buy", "3")])], 10: [("claude", [mkt()])], 20: [("gpt", [lim("buy", "1", 98)]), ("ours", [mkt("sell", "2")])]}
 
 
 def state(lg):
-    return {t: (lg.view(t).equity(), lg.view(t).position(BTC), len(lg.view(t).open_orders()),
-                len(lg.engines[t].fills)) for t in TEAMS}
+    out = {}
+    for t in TEAMS:
+        e = lg.engines[t]
+        orders = [(o.req.side, o.req.type, o.req.price, o.req.qty, o.state) for o in e.orders]
+        out[t] = (lg.view(t).equity(), lg.view(t).position(BTC), orders, list(e.fills), list(e.ledger))
+    return out
 
 
 def test_same_events_same_market_all_teams():
@@ -59,22 +63,30 @@ def test_snapshot_replay_equals_uninterrupted(tmp_path):
     a = run_league(evs, ORDERS)
     k = 15
     b = run_league(evs[:k], {i: v for i, v in ORDERS.items() if i < k})
+    for team, items in ORDERS[k]:   # 스냅샷 시점에 큐에 대기 중인 주문(복원 쪽은 다시 내지 않는다)
+        b.submit(team, items)
     b.snapshot(tmp_path / "s.pkl")
     c = League.restore(tmp_path / "s.pkl")
     assert c.last_ts == evs[k - 1][1].at_ms
-    run_league(evs[k:], {i: v for i, v in ORDERS.items() if i >= k}, c)
+    run_league(evs[k:], {i: v for i, v in ORDERS.items() if i > k}, c)
     assert state(c) == state(a)
     assert any(state(a)[t][3] for t in TEAMS)  # 체결이 실제로 있었는지
+    assert c.view("gemini").position(BTC) == 3   # 스냅샷 시점에 대기 중이던 주문이 복원된 큐에서 나감
+    assert b.queues["gemini"].pending and c.queues["gemini"].pending == []
 
 
 def test_gap_downgrades_grade():
     evs = [BookEvent(0, BTC, BIDS, ASKS), TradeEvent(10, BTC, Decimal(100), Decimal(1), "buy"),
            BookEvent(1000, BTC, BIDS, ASKS), TradeEvent(1010, BTC, Decimal(100), Decimal(1), "buy"),
            BookEvent(11_000, BTC, BIDS, ASKS)]  # 10초 공백 뒤 호가
-    lg = League(["claude"], 0)
-    for i, e in enumerate(evs):
-        if i == 3:
-            lg.submit("claude", [mkt()])  # 공백 직전에 낸 주문 → 공백 뒤 스냅샷에서 체결
-        lg.step(e)
-    fills = lg.engines["claude"].fills
-    assert fills and all(f["fill_grade"] != "A" for f in fills)
+    def grades(evs):
+        lg = League(["claude"], 0)
+        for i, e in enumerate(evs):
+            if i == 3:
+                lg.submit("claude", [mkt()])  # 공백 직전에 낸 주문 → 다음 스냅샷에서 체결
+            lg.step(e)
+        return [f["fill_grade"] for f in lg.engines["claude"].fills]
+
+    assert grades(evs) and "A" not in grades(evs)
+    ctrl = evs[:4] + [BookEvent(2000, BTC, BIDS, ASKS)]   # 공백 없음 → A
+    assert set(grades(ctrl)) == {"A"}
