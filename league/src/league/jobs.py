@@ -41,6 +41,7 @@ def main(argv=None) -> None:
     ap.add_argument("--data", required=True, type=Path)
     a = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
+    logging.getLogger("httpx").setLevel(logging.WARNING)
     decide_all(a.data)
 
 

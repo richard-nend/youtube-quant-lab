@@ -141,7 +141,7 @@ def test_missed_hours_logged(tmp_path, caplog):
 def test_low_memory_skips_round(tmp_path, monkeypatch, caplog):
     called = []
     d = dm.Daemon(tmp_path, repo=tmp_path, brake=FakeBrake(), signals=lambda now: called.append(now) or [])
-    monkeypatch.setattr(dm, "enough_memory", lambda: False)
+    monkeypatch.setattr(dm, "enough_memory", lambda *a: False)
     with caplog.at_level(logging.WARNING, logger="league.daemon"):
         assert d.fetch_signals(T0 // H * H) is None
     assert not called and "memory" in caplog.text

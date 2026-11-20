@@ -35,6 +35,7 @@ from .scoreboard import build_scoreboard, write_public
 from .venues import BTC, TOOBIT
 
 log = logging.getLogger("league.daemon")
+OURS_MIN_BYTES = 512 * 2**20
 
 H, DAY = 3_600_000, 86_400_000
 LAG_MS = 3000             # 거래소 스트림끼리 시각이 조금 어긋나도 정렬해서 엔진에 넣는 대기
@@ -323,8 +324,9 @@ class Daemon:
 
     def fetch_signals(self, hour: int):
         """None = 이번 회차 건너뜀(이유는 로그). 스레드에서 불러도 되게 리그 상태는 건드리지 않는다."""
-        if not enough_memory():
-            log.warning("ours round %s skipped: available memory < 3GB", _utc(hour, "%m-%d %H:00"))
+        # brake is LightGBM+logistic (daemon RSS ~30-64MB); 3GB default is for heavy model loads
+        if not enough_memory(OURS_MIN_BYTES):
+            log.warning("ours round %s skipped: available memory < 512MB", _utc(hour, "%m-%d %H:00"))
             return None
         try:
             if self._brake is None:
@@ -531,6 +533,7 @@ def main(argv=None) -> None:
     ap.add_argument("--publish", action="store_true", help="성적판을 쓴 뒤 deploy/publish.sh 실행")
     a = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
+    logging.getLogger("httpx").setLevel(logging.WARNING)  # 1 s mark poll would log 2 lines/s
     d = Daemon(a.data, repo=a.repo, publish=a.publish)
 
     async def go():
